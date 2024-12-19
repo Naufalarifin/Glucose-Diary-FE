@@ -72,26 +72,48 @@ export default function CreateAccount() {
         </div>
       </div>
       <div className="flex-1 flex items-center justify-center">
-      <div className="container relative flex  justify-center">
-        <div className="lg:p-8">
-          <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-            <div className="flex flex-col space-y-2 text-center">
-              <h1 className="text-5xl font-semibold tracking-tight text-orange-500">
-                Welcome To Glucose Diary!
-              </h1>
-            </div>
-            <div className="flex flex-row gap-4 justify-center">
-              <Button className="bg-orange-500 hover:bg-orange-600">
-                <Link href="/login">Log In</Link>
-              </Button>
-              <Button asChild variant="outline" className="border-orange-500 text-orange-500 hover:bg-orange-50">
-                <Link href="/register">Create Account</Link>
-              </Button>
-            </div>
+        <div className="w-full max-w-md space-y-8 px-4">
+          <div>
+            <h2 className="text-3xl font-bold text-orange-500">Welcome Back!</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Don't have an account? <Link href="/" className="text-blue-500 hover:underline">Create Account</Link>
+            </p>
           </div>
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <Input 
+              type="text" 
+              name="username" 
+              placeholder="Enter your username" 
+              className="h-12 text-lg px-4" 
+              required 
+              onChange={handleInputChange} 
+            />
+            <Input 
+              type="password" 
+              name="password" 
+              placeholder="Enter your password" 
+              className="h-12 text-lg px-4" 
+              required 
+              onChange={handleInputChange} 
+            />
+            <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white" >Log in</Button>
+            </form>
+            <p className="mt-2 text-sm text-gray-600">
+              Login as user?<Link href="/login" className="text-blue-500 hover:underline">Login</Link>
+            </p>
+        </div>
       </div>
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-16 max-w-sm w-full text-center">
+            <Image src="/images/logo_succes.png" alt="Female" width={300} height={300}/>
+            <h2 className="text-xl font-bold flex items-center justify-center mb-4 mt-10">Login Success</h2>
+            <Button onClick={ handleContinue} className="w-full bg-orange-500 hover:bg-orange-600 text-white">
+              CONTINUE
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
-      </div>
-    </div>
-  );
+  )
 }
