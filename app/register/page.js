@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft} from 'lucide-react'
+import axiosInstance from '@/lib/axios'
 
 export default function CreateAccount() {
     const router = useRouter()
@@ -20,8 +21,9 @@ export default function CreateAccount() {
       lastName: '',
       email: '',
       password: '',
-      birthDate: '',
+      dateBirth: '',
     })
+    const [isLoading, setLoading] = useState(false)
   
     const handleNextStep = () => {
       setStep(2)
@@ -36,16 +38,34 @@ export default function CreateAccount() {
         setFormData(prev => ({ ...prev, [name]: value }))
       }
     
-      const handleSubmit = (e) => {
+      const handleSubmit = async (e) => {
         e.preventDefault()
         if (step === 1) {
           handleNextStep()
         } else {
           if (gender) {
-            setShowSuccessModal(true)
+            setLoading(true)
+            const payload = {
+              username: formData.firstName + formData.lastName,
+              email: formData.email,
+              password: formData.password,
+              dateBirth: formData.dateBirth,
+              gender: gender,
+            }
+            try {
+              const response = await axiosInstance.post('/user', payload);
+              if (response.status === 200) {
+                setShowSuccessModal(true);
+              }
+            } catch (error) {
+              if (error.response) {
+                alert(error.response.data.message[0]);
+              }
+            }
           } else {
             alert("Please select a gender")
           }
+          setLoading(false)
         }
       }
 
@@ -98,11 +118,11 @@ export default function CreateAccount() {
           </div>
           <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); handleNextStep(); }}>
             <div className="flex gap-4">
-              <Input type="text" placeholder="First Name" className="flex-1" required/>
-              <Input type="text" placeholder="Last Name" className="flex-1" required/>
+              <Input type="text" name="firstName" placeholder="First Name" className="flex-1" required onChange={handleInputChange} />
+              <Input type="text" name="lastName" placeholder="Last Name" className="flex-1" required onChange={handleInputChange} />
             </div>
-            <Input type="email" placeholder="Enter your email" required/>
-            <Input type="password" placeholder="Enter your password" required/>
+            <Input type="email" name="email" placeholder="Enter your email" required onChange={handleInputChange} />
+            <Input type="password" name="password" placeholder="Enter your password" required onChange={handleInputChange} />
             <div className="flex items-center">
               <Checkbox id="terms" checked={agreed} onCheckedChange={setAgreed} />
               <label htmlFor="terms" className="ml-2 text-sm text-gray-600">
@@ -124,7 +144,7 @@ export default function CreateAccount() {
                 Fill with your birth date and gender
               </p>
               <form className="space-y-6" onSubmit={handleSubmit}>
-                <Input type="date" name="birthDate" placeholder="Date of birth" className="h-12 text-lg px-4" required onChange={handleInputChange} />
+                <Input type="date" name="dateBirth" placeholder="Date of birth" className="h-12 text-lg px-4" required onChange={handleInputChange} />
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700">Gender</p>
                   <div className="flex gap-4">
@@ -134,7 +154,7 @@ export default function CreateAccount() {
                       } transition-colors duration-200 p-2 rounded-xl`}
                       onClick={() => setGender('male')}
                     >
-                      <Image src="/images/logo_male.png" alt="Male" width={70} height={70} />
+                      <Image src="/images/logo_malee.png" alt="Male" width={70} height={70} />
                       <span className="mt-2">Male</span>
                     </div>
                     <div
@@ -143,12 +163,12 @@ export default function CreateAccount() {
                       } transition-colors duration-200 p-2 rounded-xl`}
                       onClick={() => setGender('female')}
                     >
-                      <Image src="/images/logo_female.png" alt="Female" width={70} height={70} />
+                      <Image src="/images/logo_femalee.png" alt="Female" width={70} height={70} />
                       <span className="mt-2">Female</span>
                     </div>
                   </div>
                 </div>
-                <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white">Create Account</Button>
+                <Button disabled={isLoading} type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white">{isLoading ? "Loading..." : "Create Account"}</Button>
               </form>
             </>
           )}
