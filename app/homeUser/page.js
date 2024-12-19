@@ -156,7 +156,7 @@ export default function HomeUser() {
       spesialist: 'Endrokrinolog',
       gmail: 'wisnu@gmail.com',
       image: '/images/doctor-1.jpg',
-      jadwal: ['09:00', '10:00', '11:00', '15:00', '16:00'],
+      jadwal: ['senin', 'selasa', 'rabu', 'jumat', 'sabtu'],
     },
     {
       id: 2,
@@ -262,7 +262,6 @@ export default function HomeUser() {
         </div>
         <div className="flex items-center space-x-4">
           <button className="relative">
-            <Bell className="w-6 h-6 text-gray-600" />
             <span className="absolute top-0 right-0 w-2 h-2 rounded-full"></span>
           </button>
           <div className="flex items-center space-x-2">
@@ -378,7 +377,6 @@ export default function HomeUser() {
                 {/* Your Goal For Today */}
                 <div className="bg-white border border-gray-200 rounded-lg p-6">
                   <h1 className="text-2xl font-bold mb-4">Hi, Giano</h1>
-                  <h2 className="text-xl font-semibold mb-2">Your Goal For Today</h2>
                   <p className="text-gray-600">Good Luck</p>
                 </div>
 
