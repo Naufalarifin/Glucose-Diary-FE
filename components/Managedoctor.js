@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import { Button } from "@/components/ui/button"
@@ -8,8 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
+import axiosInstance from "@/lib/axios"
+import { LoadingSpinner } from "@/components/ui/loading"
 
 export function Home() {
+  const [data, setData] = useState([])
   const [doctorImage, setDoctorImage] = useState("/images/logo_inputPicture.png")
   const [doctorName, setDoctorName] = useState("")
   const [gmail, setGmail] = useState("")
@@ -17,8 +20,10 @@ export function Home() {
   const [jadwal, setJadwal] = useState([])
   const [editItem, setEditItem] = useState(null)
   const [showEditModal, setShowEditModal] = useState(false)
-  
+  const [LoadingSubmitDoctor, setLoadingSubmitDoctor] = useState(false) 
+  const [loadingDeleteDoctor, setLoadingDeleteDoctor] = useState(null)
   const [doctorItems, setDoctorItems] = useState([
+    
     {
       id: 1,
       name: 'Dr. Wisnu Satrio',
@@ -101,6 +106,45 @@ export function Home() {
     }
   ])
 
+  const getDoctor = () => {
+    axiosInstance.get('/doctor')
+    .then(response =>{
+      setData(response.data)
+    })
+    .catch(error =>{
+      console.error(error)
+    });
+  }
+
+  useEffect(() => {
+    getDoctor()
+  }, []);
+
+  const handleSubmitDoctor = (e) => {
+    setLoadingSubmitDoctor(true)
+    e.preventDefault()
+    const payload = {
+      name: doctorName,
+      email: gmail,
+      speciality: spesialist,
+      practiceDay: jadwal
+    }
+
+    axiosInstance.post('/doctor', payload)
+    .then(() => {
+      alert("Doctor Berhasil Ditambahkan")
+      getDoctor()
+      setDoctorName("")
+      setGmail("")
+      setSpesialist("")
+      setLoadingSubmitDoctor(false)
+    })
+    .catch(error => {
+      console.log(error)
+      setLoadingSubmitDoctor(false)
+    })
+  }
+
   const handleImageUpload = (e, isEdit = false) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -118,23 +162,24 @@ export function Home() {
     }
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    const newDoctor = {
-      id: doctorItems.length + 1,
-      name: doctorName,
-      gmail: gmail,
-      spesialist: spesialist,
-      jadwal: jadwal,
-      image: doctorImage
+
+  const handleUpdateDoctor = (id) => {
+    const payload ={
+      name: editItem.name,
+      email: editItem.gmail,
+      speciality: editItem.spesialist,
+      practiceDay: editItem.jadwal
     }
-    setDoctorItems([...doctorItems, newDoctor])
-    // Reset form
-    setDoctorImage("/placeholder.svg?height=100&width=100")
-    setDoctorName("")
-    setGmail("")
-    setSpesialist("")
-    setJadwal([])
+    axiosInstance.put(`/doctor/${id}`,payload)
+    .then(() =>{
+      alert("berhasil diubah")
+      getDoctor()
+    })
+    .catch(error => {
+      console.log(error)
+
+    })
+    setShowEditModal(false)
   }
 
   const handleEdit = (item) => {
@@ -142,26 +187,28 @@ export function Home() {
     setShowEditModal(true)
   }
 
-  const handleUpdate = () => {
-    if (editItem) {
-      setDoctorItems(doctorItems.map(item => 
-        item.id === editItem.id ? editItem : item
-      ))
-      setShowEditModal(false)
-      setEditItem(null)
-    }
-  }
 
-  const handleDelete = (id) => {
-    setDoctorItems(doctorItems.filter(item => item.id !== id))
+  const handleDeleteDoctor = (id) => {
+    setLoadingDeleteDoctor(id)
+    axiosInstance.delete(`/doctor/${id}`)
+    .then(response => {
+      console.log(response.status)
+      if (response.status != 200 || response.status != 201) {
+        alert("Error occured, please try again")
+      } else {
+        alert("doctor berhasil dihapus")
+        getDoctor()
+      }
+      setLoadingDeleteDoctor(null)
+    })
+    .catch(error =>{
+      console.log("error gais")
+      setLoadingDeleteDoctor(null)
+    })
   }
 
   const generateTimeSlots = () => {
-    const slots = []
-    for (let i = 0; i < 24; i++) {
-      slots.push(`${i.toString().padStart(2, '0')}:00`)
-      slots.push(`${i.toString().padStart(2, '0')}:30`)
-    }
+    const slots = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu']
     return slots
   }
 
@@ -174,7 +221,7 @@ export function Home() {
         {/* Insert Data Doctor Card */}
         <Card className="p-6">
           <h2 className="text-xl font-bold mb-6">Insert data doctor</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmitDoctor} className="space-y-4">
             {/* Image Upload */}
             <div className="w-52 border-dashed border-gray-200 rounded-lg p-4 text-center ml-24 ">
               <input
@@ -255,10 +302,10 @@ export function Home() {
         <Card className="p-6">
           <h2 className="text-xl font-bold mb-6">Edit Data Doctor</h2>
           <div className="space-y-4 max-h-[500px] overflow-y-auto">
-            {doctorItems.map((item) => (
-              <div key={item.id} className="flex items-start space-x-4 p-2 border rounded-lg">
+            {data.length ? data.map((item, index) => (
+              <div key={index} className="flex items-start space-x-4 p-2 border rounded-lg">
                 <Image
-                  src={item.image}
+                  src={"/images/logo_malee.png"}
                   alt={item.name}
                   width={64}
                   height={64}
@@ -266,8 +313,8 @@ export function Home() {
                 />
                 <div className="flex-1">
                   <h3 className="font-semibold">{item.name}</h3>
-                  <p className="text-sm text-gray-600">{item.spesialist}</p>
-                  <p className="text-sm text-gray-600">{item.gmail}</p>
+                  <p className="text-sm text-gray-600">{item.speciality}</p>
+                  <p className="text-sm text-gray-600">{item.email}</p>
                   <p className="text-sm text-gray-600">
                     Jadwal: {item.jadwal.join(', ')}
                   </p>
@@ -283,13 +330,13 @@ export function Home() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleDelete(item.id)}
+                    onClick={() => handleDeleteDoctor(item.doctorId)}
                   >
-                    <Trash2 className="h-4 w-4" />
+                     {loadingDeleteDoctor == item.doctorId ? <LoadingSpinner /> : <Trash2 className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
-            ))}
+            )) : <LoadingSpinner />}
           </div>
         </Card>
       </div>
@@ -313,7 +360,7 @@ export function Home() {
               <label htmlFor="edit-doctor-image" className="cursor-pointer">
                 <div className="w-32 h-32 mx-auto mb-2">
                   <Image
-                    src={editItem?.image || "/placeholder.svg?height=100&width=100"}
+                    src={editItem?.image || "/images/logo_malee.png"}
                     alt="Doctor preview"
                     width={128}
                     height={128}
@@ -371,7 +418,7 @@ export function Home() {
             </div>
 
             <Button
-              onClick={handleUpdate}
+              onClick={() => handleUpdateDoctor(editItem.doctorId)}
               className="w-full bg-orange-500 text-white hover:bg-orange-600"
             >
               Update

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Pencil, Trash2, Eye, EyeOff } from 'lucide-react'
 import Image from 'next/image'
 import { Button } from "@/components/ui/button"
@@ -8,8 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import axiosInstance from "@/lib/axios"
+import { LoadingSpinner } from "@/components/ui/loading"
 
 export function HomeAdminUser() {
+  const [data, setData] = useState([])
   const [userImage, setUserImage] = useState("/images/logo_inputPicture.png")
   const [userName, setUserName] = useState("")
   const [gmail, setGmail] = useState("")
@@ -18,48 +21,10 @@ export function HomeAdminUser() {
   const [birthday, setBirthday] = useState("")
   const [editItem, setEditItem] = useState(null)
   const [showEditModal, setShowEditModal] = useState(false)
-  
   const [showPassword, setShowPassword] = useState(false)
   const [showEditPassword, setShowEditPassword] = useState(false)
-
-  const [userItems, setUserItems] = useState([
-    {
-        id: 1,
-        name: "Naudal Arifin",
-        gmail: "naudalarifin@gmail.com",
-        password: "ksadk",
-        gender: "male",
-        birthday: "2000-01-01",
-        image: '/images/User.jpg'
-      },
-      {
-        id: 2,
-        name: "Sakie Giano",
-        gmail: "sakiegiano@gmail.com",
-        password: "ksadk",
-        gender: "male",
-        birthday: "2000-01-01",
-        image: '/images/User.jpg'
-      },
-      {
-        id: 3,
-        name: "Bintang Rizky",
-        gmail: "bintangrizky@gmail.com",
-        password: "ksadk",
-        gender: "male",
-        birthday: "2000-01-01",
-        image: '/images/User.jpg'
-      },
-      {
-        id: 4,
-        name: "Alvito Naufal",
-        gmail: "naufalhalim@gmail.com",
-        password: "ksadk",
-        gender: "male",
-        birthday: "2000-01-01",
-        image: '/images/User.jpg'
-      }
-  ])
+  const [loadingUpdateUser, setLoadingUpdateUser] = useState(false)
+  const [loadingDeleteUser, setLoadingDeleteUser] = useState(null)
 
   const handleImageUpload = (e, isEdit = false) => {
     const file = e.target.files?.[0]
@@ -78,26 +43,6 @@ export function HomeAdminUser() {
     }
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    const newUser = {
-      id: userItems.length + 1,
-      name: userName,
-      gmail: gmail,
-      password: password,
-      gender: gender,
-      birthday: birthday,
-      image: userImage
-    }
-    setUserItems([...userItems, newUser])
-    // Reset form
-    setUserImage("/placeholder.svg?height=100&width=100")
-    setUserName("")
-    setGmail("")
-    setPassword("")
-    setGender("")
-    setBirthday("")
-  }
 
   const handleEdit = (item) => {
     setEditItem(item)
@@ -118,6 +63,86 @@ export function HomeAdminUser() {
     setUserItems(userItems.filter(item => item.id !== id))
   }
 
+  const getUser = () => {
+    axiosInstance.get('/user')
+    .then(response =>{
+      setData(response.data)
+    })
+    .catch(error =>{
+      console.error(error)
+    });
+  }
+
+  useEffect(() => {
+    getUser()
+  }, []);
+
+  const handleSubmitUser = (e) => {
+    setLoadingUpdateUser(true)
+    e.preventDefault()
+    const payload = {
+      username: userName,
+      password: password,
+      email: gmail,
+      dateBirth: birthday,
+      gender: gender
+    }
+
+    axiosInstance.post('/user', payload)
+    .then(() => {
+      alert("User Berhasil Ditambahkan")
+      getUser()
+      setUserName("")
+      setGmail("")
+      setPassword("")
+      setBirthday("")
+      setGender("")
+      setLoadingUpdateUser(false)
+    })
+    .catch(error => {
+      console.log(error)
+      setLoadingUpdateUser(false)
+    })
+  }
+
+  const handleDeleteUser = (id) => {
+    setLoadingDeleteUser(id)
+    axiosInstance.delete(`/user/${id}`)
+    .then(response => {
+      console.log(response.status)
+      if (response.status != 200 || response.status != 201) {
+        alert("Error occured, please try again")
+      } else {
+        alert("user berhasil dihapus")
+        getUser()
+      }
+      setLoadingDeleteUser(null)
+    })
+    .catch(error =>{
+      console.log("error gais")
+      setLoadingDeleteUser(null)
+    })
+  }
+
+  const handleUpdateUser = (id) => {
+    const payload ={
+      username: editItem.name,
+      password: editItem.password,
+      email: editItem.gmail,
+      dateBirth: editItem.birthday,
+      gender: editItem.gender
+    }
+    axiosInstance.put(`/user/${id}`,payload)
+    .then(() =>{
+      alert("berhasil diubah")
+      getUser()
+    })
+    .catch(error => {
+      console.log(error)
+
+    })
+    setShowEditModal(false)
+  }
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-6">User Recording App</h1>
@@ -125,7 +150,7 @@ export function HomeAdminUser() {
         {/* Insert Data User Card */}
         <Card className="p-6">
           <h2 className="text-xl font-bold mb-6">Insert data user</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmitUser} className="space-y-4">
             {/* Image Upload */}
             <div className="w-52 border-dashed border-gray-200 rounded-lg p-4 text-center ml-24 ">
               <input
@@ -197,8 +222,8 @@ export function HomeAdminUser() {
               required
             />
 
-            <Button type="submit" className="w-full bg-orange-500 text-white hover:bg-orange-600">
-              Submit
+            <Button disabled={loadingUpdateUser} type="submit" className="w-full bg-orange-500 text-white hover:bg-orange-600">
+            {loadingUpdateUser ? <LoadingSpinner /> : " Submit"}
             </Button>
           </form>
         </Card>
@@ -207,21 +232,21 @@ export function HomeAdminUser() {
         <Card className="p-6">
           <h2 className="text-xl font-bold mb-6">Edit Data User</h2>
           <div className="space-y-4 max-h-[500px] overflow-y-auto">
-            {userItems.map((item) => (
-              <div key={item.id} className="flex items-start space-x-4 p-4 border rounded-lg">
+            {data.length ? data.map((item, index) => (
+              <div key={index} className="flex items-start space-x-4 p-4 border rounded-lg">
                 <Image
-                  src={item.image}
-                  alt={item.name}
+                  src={'/images/Giano.png'}
+                  alt={item.username}
                   width={64}
                   height={64}
                   className="w-16 h-16 rounded-lg object-cover"
                 />
                 <div className="flex-1">
-                  <h3 className="font-semibold">{item.name}</h3>
-                  <p className="text-sm text-gray-600">{item.gmail}</p>
+                  <h3 className="font-semibold">{item.username}</h3>
+                  <p className="text-sm text-gray-600">{item.email}</p>
                   <p className="text-sm text-gray-600">Password: ******</p>
                   <p className="text-sm text-gray-600">{item.gender}</p>
-                  <p className="text-sm text-gray-600">{item.birthday}</p>
+                  <p className="text-sm text-gray-600">{item.dateBirth}</p>
                 </div>
                 <div className="flex space-x-2">
                   <Button
@@ -234,13 +259,13 @@ export function HomeAdminUser() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleDelete(item.id)}
+                    onClick={() => handleDelete(item.userId)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
-            ))}
+            )): <LoadingSpinner />}
           </div>
         </Card>
       </div>
@@ -278,14 +303,14 @@ export function HomeAdminUser() {
             {/* User Name Input */}
             <Input
               placeholder="User Name"
-              value={editItem?.name || ""}
+              value={editItem?.username || ""}
               onChange={(e) => setEditItem(editItem ? { ...editItem, name: e.target.value } : null)}
             />
 
             <Input
               type="email"
               placeholder="Email"
-              value={editItem?.gmail || ""}
+              value={editItem?.email || ""}
               onChange={(e) => setEditItem(editItem ? { ...editItem, gmail: e.target.value } : null)}
             />
             <div className="relative">
@@ -320,12 +345,12 @@ export function HomeAdminUser() {
             <Input
               type="date"
               placeholder="Birthday"
-              value={editItem?.birthday || ""}
+              value={editItem?.dateBirth || ""}
               onChange={(e) => setEditItem(editItem ? { ...editItem, birthday: e.target.value } : null)}
             />
 
             <Button
-              onClick={handleUpdate}
+              onClick={() => handleUpdateUser(editItem.userId)}
               className="w-full bg-orange-500 text-white hover:bg-orange-600"
             >
               Update

@@ -12,6 +12,7 @@ import axiosInstance from '@/lib/axios'
 
 export default function CreateAccount() {
     const router = useRouter()
+    
     const [step, setStep] = useState(1)
     const [agreed, setAgreed] = useState(false)
     const [gender, setGender] = useState('')
@@ -53,7 +54,7 @@ export default function CreateAccount() {
               gender: gender,
             }
             try {
-              const response = await axiosInstance.post('/user', payload);
+              const response = await axiosInstance.post('/auth/register', payload);
               if (response.status === 200) {
                 setShowSuccessModal(true);
               }

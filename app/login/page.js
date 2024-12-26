@@ -7,12 +7,13 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import axios from 'axios'
 
 export default function CreateAccount() {
   const [isClient, setIsClient] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: '',
   })
 
@@ -27,10 +28,39 @@ export default function CreateAccount() {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    setShowSuccessModal(true)
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+  
+    // Replace with your actual payload data
+    const payload = {
+      username: formData.username,
+      password: formData.password,
+    };
+  
+    // Encode payload as application/x-www-form-urlencoded
+    const urlEncodedPayload = new URLSearchParams();
+    for (const key in payload) {
+      urlEncodedPayload.append(key, payload[key]);
+    }
+  
+    try {
+      const response = await axios.post('https://absolute-chicken-wsa-server-a1ecd4e0.koyeb.app/login', urlEncodedPayload, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        withCredentials: true
+      });
+  
+      if (response.status === 200) {
+        console.log('Login successful:', response.data);
+        setShowSuccessModal(true);
+      } else {
+        console.log('Login failed:', response.status, response.data);
+      }
+    } catch (error) {
+      console.error('Error during login:', error.response || error.message);
+    }
+  };
 
   const handleContinue = () => {
     router.push('/homeUser')

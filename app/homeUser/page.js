@@ -1,19 +1,18 @@
 "use client"
 
-import { useState } from 'react'
-import { User } from 'lucide-react'
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { LoadingSpinner } from "@/components/ui/loading"
+import axiosInstance from "@/lib/axios"
+import { ChevronLeft, ChevronRight, LogOut, Settings, ShieldOff, User } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Bell, Search, Settings, LogOut, ChevronLeft, ChevronRight, X, ShieldOff } from 'lucide-react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Line, LineChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer} from "recharts"
-import { ChartContainer, ChartTooltip } from "@/components/ui/chart"
-
+import { useEffect, useRef, useState } from 'react'
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
 
 export default function HomeUser() {
+    const [data, setData] = useState([])
     const [searchQuery, setSearchQuery] = useState('')
     const [isDashboardOpen, setIsDashboardOpen] = useState(true)
     const [activeSection, setActiveSection] = useState('Dashboard')
@@ -26,8 +25,26 @@ export default function HomeUser() {
     const [profileImage, setProfileImage] = useState("/images/profil.jpg")
     const [selectedDoctorDetails, setSelectedDoctorDetails] = useState(null)
     const [selectedTime, setSelectedTime] = useState(null)
-    const [selectedDate, setSelectedDate] = useState(null)
     const [selectedType, setSelectedType] = useState(null)
+    const [searchFood, setSearchFood] = useState("")
+    const [detailUser, setDetailUser] = useState(null)
+    const [loadingUpdateUser, setLoadingUpdateUser] = useState(false)
+    const fileInputRef = useRef(null)
+
+  const handleChangeImage = () => {
+    fileInputRef.current.click(); // Trigger the file input click
+  };
+  
+    useEffect(() => {
+      axiosInstance.get('/food')
+      .then(response =>{
+        setData(response.data)
+      })
+      .catch(error =>{
+        console.error(error)
+      });
+    }, []);
+
     const foodHistory = [
         { date: 'Today', items: [
           { name: 'Nasi Rawon', description: 'Kurang Persiasi!', portion: '2 Porsi', image: '/images/nasi-rawon.jpg' },
@@ -78,8 +95,8 @@ export default function HomeUser() {
     setActiveSection('doctorDetails')
   }
 
-  const handleFoodSelect = (foodId) => {
-    setSelectedFood(foodId)
+  const handleFoodSelect = (food) => {
+    setSelectedFood(food)
   }
 
   const router = useRouter()
@@ -88,66 +105,6 @@ export default function HomeUser() {
     router.push('/login')
   }
   
-
-  
-  const [foodItems, setRecordedFoods] = useState([
-    {
-      id: 1,
-      name: "Nasi Goreng",
-      description: "Porsi Aman",
-      portion: "1 Porsi",
-      image: "/images/nasigoreng.jpg"
-    },
-    {
-      id: 2,
-      name: "Nasi Rawon",
-      description: "Kurang Persiasi",
-      portion: "2 Porsi",
-      image: "/images/nasirawon.jpeg"
-    },
-    {
-      id: 3,
-      name: "Mie Goreng",
-      description: "Porsi Aman",
-      portion: "1 Porsi",
-      image: "/placeholder.svg?height=50&width=50"
-    },
-    {
-      id: 4,
-      name: "Ayam Goreng",
-      description: "Porsi Aman",
-      portion: "1 Porsi",
-      image: "/placeholder.svg?height=50&width=50"
-    },
-    {
-      id: 5,
-      name: "Sayur Asem",
-      description: "Porsi Aman",
-      portion: "2 Porsi",
-      image: "/placeholder.svg?height=50&width=50"
-    },
-    {
-      id: 6,
-      name: "Soto Ayam",
-      description: "Porsi Aman",
-      portion: "1 Porsi",
-      image: "/placeholder.svg?height=50&width=50"
-    },
-    {
-      id: 7,
-      name: "Gado-gado",
-      description: "Porsi Aman",
-      portion: "1 Porsi",
-      image: "/images/gado-gado.jpg"
-    },
-    {
-      id: 8,
-      name: "Rendang",
-      description: "Porsi Aman",
-      portion: "1 Porsi",
-      image: "/placeholder.svg?height=50&width=50"
-    }
-  ])
   const appointmentTypes = ["Male", "Female", "Child"]
   const doctors = [
     {
@@ -239,6 +196,72 @@ export default function HomeUser() {
     { period: "Week 5", sugar: 310 },
   ]
 
+  const filteredFood = data.filter(item => 
+    item.name.toLowerCase().includes(searchFood.toLowerCase())
+  )
+
+  const handleSubmitFoodRecord = () => {
+    const payload = {
+      record_date: new Date().toLocaleDateString(),
+      food_id: selectedFood.foodID,
+      user_id: 24 
+    }
+
+    axiosInstance.post('/foodRecord', payload)
+    .then(() => {
+      alert("Food Record Berhasil Ditambahkan")
+    })
+    .catch(error => {
+      console.log(error)
+    })
+  }
+
+  const getUserDetail = () => {
+    axiosInstance.get(`/user/${24}`)
+    .then(response => {
+      setDetailUser(response.data)
+    })
+    .catch(error => {
+      console.log(error)
+    })
+  }
+
+  const putUserDetail = () => {
+    setLoadingUpdateUser(true)
+    const payload ={
+      username : detailUser.username,
+      email: detailUser.email,
+      dateBirth: detailUser.dateBirth,
+      gender: detailUser.gender,
+      password: detailUser.password
+    }
+    axiosInstance.put(`/user/${24}`, payload)
+    .then(() => {
+      alert("Data Berhasil Diubah")
+      setLoadingUpdateUser(false)
+    })
+    .catch(error => {
+      console.log(error)
+      setLoadingUpdateUser(false)
+    })
+  }
+  
+  const handleChangeUserData = (name, value) => {
+    detailUser[name] = value
+  }
+
+  const handleProfileChange = (event) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const newImage = e.target.result
+        setProfileImage(newImage)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   return (
     <div className="flex flex-col h-screen bg-white overflow-hidden">
       {/* Header */}
@@ -272,7 +295,7 @@ export default function HomeUser() {
                         width={32}
                         height={32}
             />
-            <span className="font-semibold">Hi, Giano</span>
+            <span className="font-semibold">Hi, </span>
           </div>
         </div>
       </header>
@@ -306,7 +329,7 @@ export default function HomeUser() {
               <ul className="space-y-2">
                 <li>
                     <button
-                        onClick={() => (handleSectionChange('recordFood'),handleHomeChange('Home'))}
+                        onClick={() => (handleSectionChange('recordFood'),handleHomeChange(''))}
                         className={`flex items-center w-full text-left ${
                         activeSection === 'recordFood' ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'
                         }`}
@@ -317,7 +340,7 @@ export default function HomeUser() {
                 </li>
                 <li>
                     <button
-                        onClick={() => (handleSectionChange('foodHistory'),handleHomeChange('Home'))}
+                        onClick={() => (handleSectionChange('foodHistory'),handleHomeChange(''))}
                         className={`flex items-center w-full text-left ${
                         activeSection === 'foodHistory' ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'
                         }`}
@@ -328,7 +351,7 @@ export default function HomeUser() {
                 </li>
                 <li>
                     <button
-                        onClick={() => (handleSectionChange('consultDoctorSection1'),handleHomeChange('Home')) }
+                        onClick={() => (handleSectionChange('consultDoctorSection1'),handleHomeChange('HDoctor')) }
                         className={`flex items-center w-full text-left ${
                         activeSection === 'consultDoctorSection1' ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'
                         }`}
@@ -344,7 +367,7 @@ export default function HomeUser() {
               <ul className="space-y-2">
                 <li>
                     <button
-                        onClick={() => (handleSectionChange(''),handleHomeChange('settings')) }
+                        onClick={() => (handleSectionChange(''),handleHomeChange('settings'), getUserDetail()) }
                         className={`flex items-center w-full text-left ${
                         activeMain === 'settings' ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'
                         }`}
@@ -366,7 +389,7 @@ export default function HomeUser() {
         </aside>
 
         {/* Main Content */}
-        <main className={`flex-1 overflow-y-auto transition-all duration-300 ease-in-out`}>
+        <main className={`flex-1 overflow-y-auto  duration-300 `}>
           <div className="p-8">
             {activeMain === 'Home'&& (
               <div
@@ -375,7 +398,7 @@ export default function HomeUser() {
                 }  `}
               >
                 {/* Your Goal For Today */}
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="bg-white border border-gray-200 rounded-lg p-6 h-48">
                   <h1 className="text-2xl font-bold mb-4">Hi, Giano</h1>
                   <p className="text-gray-600">Good Luck</p>
                 </div>
@@ -383,7 +406,7 @@ export default function HomeUser() {
                 {/* Reminder */}
                 <div className="bg-white border border-gray-200 rounded-lg p-6">
                   <h2 className="text-xl font-semibold mb-4">REMINDER</h2>
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid md:grid-cols-4 grid-cols-1 gap-4">
                     <div className="text-center">
                       <Image src="/images/water.png" alt="Water" width={40} height={40} className="mx-auto mb-2" />
                       <p className="font-semibold">Water</p>
@@ -408,6 +431,27 @@ export default function HomeUser() {
                 </div>
               </div>
             )}
+             {activeMain === 'HDoctor'&& (
+              <div
+                className={` ${
+                isDashboardOpen ? 'grid grid-cols-2 gap-8' : 'grid grid-cols-2 gap-8 ml-8'}
+                }  `}
+              >
+                {/* Your Goal For Today */}
+                <div className="bg-white border border-gray-200 rounded-lg p-6 h-48">
+                  <h1 className="text-2xl font-bold mb-4">Hi, Giano</h1>
+                  <p className="text-gray-600">Good Luck</p>
+                </div>
+
+                {/* Reminder */}
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <h2 className="text-xl font-semibold mb-4">STATUS BOOKING</h2>
+                  <div className="grid grid-cols-4 gap-4">
+                    
+                  </div>
+                </div>
+              </div>
+            )}
 
             {activeSection === 'Dashboard'&& (
               <div className="mt-8">
@@ -423,180 +467,222 @@ export default function HomeUser() {
                     isDashboardOpen ? 'grid grid-cols-3 gap-4' : 'grid grid-cols-3 gap-4 ml-8'}
                     }  `}
                 >
-                  {[1, 2, 3].map((index) => (
+                  {data.length ? data.map((item, index) => (
                     <div key={index} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                      <Image src={`/images/food-info-${index}.jpg`} alt={`Food Information ${index}`} width={400} height={200} className="w-full h-48 object-cover" />
+                      <Image src={'/images/nasi_goreng.jpg'} alt={`Food Information ${index}`} width={400} height={200} className="w-full h-48 object-cover" />
                       <div className="p-4">
                         <div className="flex justify-between text-sm">
-                          <span>42 gram Kalori</span>
-                          <span>12 gram Gula</span>
-                          <span>15 gram Karbohidrat</span>
+                          <span>{item.name}</span>
+                          {/* <span>42 gram Kalori</span> */}
+                          <span>{item.sugarLevel} gram Gula</span>
+                          {/* <span>15 gram Karbohidrat</span> */}
                         </div>
+                      </div>
+                    </div>
+                  )) : <LoadingSpinner />}
+                </div>
+              </div>
+            )}
+            
+        
+            {activeSection === 'recordFood' && (
+             <div
+             className={` ${
+                 isDashboardOpen ? '' : 'ml-8'}
+                 }  `}
+             >
+             <div className="grid grid-cols-2 gap-8 ">
+             {/* Left Column */}
+             <div className="space-y-8">
+               {/* Welcome Section */}
+               <div className="bg-white border border-gray-200 rounded-lg p-6 h-48">
+                 <h1 className="text-2xl font-bold mb-4">Hi, Giano</h1>
+                 <p className="text-gray-600">Good Luck</p>
+               </div>
+     
+               {/* Chart Section */}
+               <div className="bg-white border border-gray-200 rounded-lg p-6">
+               <h2 className="text-xl font-bold mb-3">Jenis Makanan</h2>
+                         <Input placeholder="Makan apa hari ini?" className="mb-4"  onChange={(e) => setSearchFood(e.target.value)} />
+                         <div className="flex justify-between text-base">
+                           <div className="flex flex-col items-center">
+                             {/* <span className="text-2xl font-bold">0</span>
+                             <span>gram</span>
+                             <span>Kalori</span> */}
+                           </div>
+                           <div className="flex flex-col items-center">
+                             <span className="text-2xl font-bold">{selectedFood ? selectedFood.sugarLevel : 0}</span>
+                             <span>gram</span>
+                             <span>Gula</span>
+                           </div>
+                         <div className="flex flex-col items-center">
+                         {/* <span className="text-2xl font-bold">0</span>
+                         <span>gram</span>
+                         <span>Karbohidrat</span> */}
+                       </div>
+                      </div>
+                   <Button className="w-full bg-orange-500 text-white hover:bg-gray-800 mt-7" onClick={handleSubmitFoodRecord}>
+                       Submit
+                   </Button>
+               </div>
+             </div>
+     
+             {/* Right Column - Food History */}
+             <div className="bg-white border border-gray-200 rounded-lg p-6">
+             <h2 className="text-xl font-bold mb-4">RECORD FOOD</h2>
+                         <div className="h-[calc(400px)] overflow-y-auto pr-2"> {/* Calculate content height */}
+                           {filteredFood.length && filteredFood.map((item, index) => (
+                             <div
+                               key={index}
+                               className="flex items-center justify-between p-3 border-b last:border-b-0"
+                             >
+                               <button
+                                 key={item.id}
+                                 onClick={() => handleFoodSelect(item)}
+                                 className={`flex items-center  p-2 rounded-lg mt-4 w-96 ${selectedFood &&
+                                 selectedFood.foodID === item.foodID
+                                 ? 'border-2 border-orange-500 '
+                                 : 'border border-gray-200 hover:border-orange-200'
+                                 }`}
+                               >
+                                 <div className="flex items-center gap-3 overflow-hidden">
+                                   <img
+                                     alt={item.name}
+                                     className="rounded-lg object-cover "
+                                     height="50"
+                                     src={'/images/nasi_goreng.jpg'}
+                                     width="100"
+                                   />
+                                   <div className="flex flex-col items-start">
+                                     <h3 className="font-semibold">{item.name}</h3>
+                                     <span className="text-left">{item.sugarLevel}</span>
+                                   </div>
+                                 </div>
+                               </button>
+                             </div>
+                           ))}
+                         </div>
+             </div>
+           </div>
+             </div>
+            )}
+            
+         {activeSection === 'foodHistory' && (
+        <div
+        className={` ${
+            isDashboardOpen ? '' : 'ml-8'}
+            }  `}
+        >
+        <div className="grid grid-cols-2 gap-8 ">
+        {/* Left Column */}
+        <div className="space-y-8">
+          {/* Welcome Section */}
+          <div className="bg-white border border-gray-200 rounded-lg p-6 h-48">
+            <h1 className="text-2xl font-bold mb-4">Hi, Giano</h1>
+            <p className="text-gray-600">Good Luck</p>
+          </div>
+
+          {/* Chart Section */}
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <h2 className="text-xl font-bold mb-6">Sugar Consumption (Per 7-Day Period)</h2>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={sugarData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis 
+                    dataKey="period" 
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis 
+                    axisLine={false}
+                    tickLine={false}
+                    ticks={[0, 90, 180, 270, 360]}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="sugar"
+                    stroke="#000"
+                    strokeWidth={2}
+                    dot={{ r: 4, fill: "#000" }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Food History */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold">FOOD HISTORY</h2>
+            <button onClick={() => setShowSuccessModal(true)}>
+              <Image 
+                src="/images/logo_sort.png" 
+                alt="Sort" 
+                width={20} 
+                height={20}
+              />
+            </button>
+          </div>
+
+          <div className="space-y-8">
+            {foodHistory.map((day, dayIndex) => (
+              <div key={dayIndex}>
+                <h3 className="text-sm font-medium text-gray-500 mb-4">{day.date}</h3>
+                <div className="space-y-4">
+                  {day.items.map((item, itemIndex) => (
+                    <div key={itemIndex} className="flex items-start gap-4">
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        width={64}
+                        height={64}
+                        className="rounded-lg"
+                      />
+                      <div className="flex-1">
+                        <h4 className="font-medium">{item.name}</h4>
+                        <p className="text-sm text-rose-500">{item.description}</p>
+                        <p className="text-sm font-medium">{item.portion}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
-            )}
+            ))}
+          </div>
+        </div>
+      </div>
+        </div>
+      )}
 
-            {activeSection === 'recordFood' && (
-              <div
-              className={` ${
-                  isDashboardOpen ? '' : 'ml-8'}
-                  }  `}
+{showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <h2 className="text-xl font-bold mb-4">Sort Options</h2>
+            <div className="space-y-2">
+              <button 
+                className="w-full text-left p-2 hover:bg-gray-100 rounded-lg"
+                onClick={() => setShowSuccessModal(false)}
               >
-                {/* Food Input and Record Food Cards Side by Side */}
-                <div className="mt-10 grid grid-cols-2 gap-8 mb-10 ">
-                  {/* Food Input Card */}
-                  <Card className="p-6 h-[280px]">
-                    <h2 className="text-xl font-bold mb-3">Jenis Makanan</h2>
-                    <Input placeholder="Makan apa hari ini?" className="mb-4" />
-                    <div className="flex justify-between text-base">
-                      {/* Kolom Kalori */}
-                      <div className="flex flex-col items-center">
-                        <span className="text-2xl font-bold">0</span>
-                        <span>gram</span>
-                        <span>Kalori</span>
-                      </div>
-                      {/* Kolom Gula */}
-                      <div className="flex flex-col items-center">
-                        <span className="text-2xl font-bold">0</span>
-                        <span>gram</span>
-                        <span>Gula</span>
-                      </div>
-                      {/* Kolom Karbohidrat */}
-                      <div className="flex flex-col items-center">
-                        <span className="text-2xl font-bold">0</span>
-                        <span>gram</span>
-                        <span>Karbohidrat</span>
-                      </div>
-                    </div>
-                    <Button className="w-full bg-orange-500 text-white hover:bg-gray-800 mt-7">
-                      Submit
-                    </Button>
-                  </Card>
-
-                  {/* Record Food Card - Scrollable Section */}
-                  <Card className="p-6 h-[280px]"> {/* Set fixed height */}
-                    <h2 className="text-xl font-bold mb-4">RECORD FOOD</h2>
-                    <div className="h-[calc(280px-6rem)] overflow-y-auto pr-2"> {/* Calculate content height */}
-                      {foodItems.map((item,index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-3 border-b last:border-b-0"
-                        >
-                          <button
-                            key={item.id}
-                            onClick={() => handleFoodSelect(item.id)}
-                            className={`flex items-center  p-2 rounded-lg mt-4 w-96 ${
-                            selectedFood === item.id
-                            ? 'border-2 border-orange-500 '
-                            : 'border border-gray-200 hover:border-orange-200'
-                            }`}
-                          >
-                            <div className="flex items-center gap-3 overflow-hidden">
-                              <img
-                                alt={item.name}
-                                className="rounded-lg object-cover "
-                                height="50"
-                                src={item.image}
-                                width="100"
-                              />
-                              <div>
-                                <h3 className="font-semibold p-2">{item.name}</h3>
-                              </div>
-                            </div>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                </div>
-              </div>
-            )}
-            
-            {activeSection === 'foodHistory' && (
-              <div
-              className={` ${
-                  isDashboardOpen ? '' : 'ml-8'}
-                  }  `}
+                Sort by Date
+              </button>
+              <button 
+                className="w-full text-left p-2 hover:bg-gray-100 rounded-lg"
+                onClick={() => setShowSuccessModal(false)}
               >
-                <div className="mt-10 grid grid-cols-2 gap-8 mb-10 ">
-                <Card className="p-6 h-[280px]"> {/* Set fixed height */}
-                  <div className="flex justify-between items-center ">
-                    <h2 className="text-xl font-semibold mb-5">FOOD HISTORY</h2>
-                    <button onClick={() => setShowSuccessModal(true)}className="relative mb-5">
-                      <Image src="/images/logo_sort.png" alt="User Avatar" width={20} height={20}/>
-                    </button>
-                  </div>
-                  <div className="h-[calc(280px-6rem)] overflow-y-auto pr-2">
-                    {foodHistory.map((day, dayIndex) => (
-                      <div key={dayIndex} className="mb-6">
-                        <h3 className="text-lg font-semibold mb-2">{day.date}</h3>
-                        {day.items.map((item, itemIndex) => (
-                          <div key={itemIndex} className="flex items-center space-x-4 bg-gray-50 p-2 rounded-lg mb-2">
-                            <Image src={item.image} alt={item.name} width={60} height={60} className="rounded-md" />
-                              <div className="flex-1">
-                                <h4 className="font-semibold">{item.name}</h4>
-                                <p className="text-sm text-gray-600">{item.description}</p>
-                              </div>
-                              <div className="text-sm font-semibold">{item.portion}</div>
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-                <Card className="p-6 h-[280px]"> {/* Set fixed height */}
-                    <h2 className="text-xl font-bold mb-4">Sugar Consumption (Per 7-Day Period)</h2>
-                    <div className="h-[calc(280px-6rem)] overflow-y-auto pr-2"> {/* Calculate content height */}
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={sugarData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="period" />
-                        <YAxis />
-                        <Tooltip />
-                        <Line
-                          type="monotone"
-                          dataKey="sugar"
-                          stroke="hsl(var(--primary))"
-                          strokeWidth={2}
-                          dot={{ r: 4 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                    </div>
-                  </Card>
-                  </div>
-              </div>
-            )}
-
-            {showSuccessModal && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center pt-56 z-50">
-                <div className="bg-white rounded-2xl p-6 w-80">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-semibold">Sort by date</h3>
-                    <button onClick={() => setShowSuccessModal(false)}
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  </div>
-                  <div className="flex gap-2 space-4">
-                    <input
-                      type="date"
-                      className="p-2 border border-gray-200 rounded-lg"
-                    />
-                    <button
-                      className="flex-1 p-4 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
-                    >
-                      Sort
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
+                Sort by Name
+              </button>
+              <button 
+                className="w-full text-left p-2 hover:bg-gray-100 rounded-lg"
+                onClick={() => setShowSuccessModal(false)}
+              >
+                Sort by Portion
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
             {activeSection === 'consultDoctorSection1'&& (
               <div className="mt-8">
                 <div
@@ -604,13 +690,14 @@ export default function HomeUser() {
                   isDashboardOpen ? '' : 'ml-10'}
                   }`}
                 >
+                  
                   <div className="bg-white border border-gray-200 rounded-lg p-4"> 
                     <div className="h-[250px] overflow-y-auto pr-2"> 
                       <div className="grid grid-cols-4 gap-3"> 
                         {doctors.map((doctor) => (
                           <button 
                             key={doctor.id}
-                            onClick={() => (handleDoctorSelect(doctor.id),handleHomeChange('Home'))}
+                            onClick={() => (handleDoctorSelect(doctor.id),handleHomeChange('HDoctor'))}
                             className={`flex flex-col items-center p-2 rounded-lg transition-all ${
                             selectedDoctor === doctor.id
                             ? 'border-2 border-orange-500'
@@ -761,9 +848,16 @@ export default function HomeUser() {
                               accept="image/*"
                               onChange={handleImageChange}
                             />
-                            <Button className="bg-[#FF5C35] hover:bg-[#FF5C35]/90 text-white rounded-full px-6 ml-32">
+                            <Button onClick={handleChangeImage} className="bg-[#FF5C35] hover:bg-[#FF5C35]/90 text-white rounded-full px-6 ml-32">
                               Change picture
                             </Button>
+                            <input
+                              type="file"
+                              ref={fileInputRef}
+                              style={{ display: 'none' }}
+                              accept="image/*"
+                              onChange={handleProfileChange}
+                            />
                           </label>
                           <Button
                             variant="outline"
@@ -778,37 +872,41 @@ export default function HomeUser() {
                         <div className="space-y-2">
                           <label className="text-sm text-gray-500">Username</label>
                           <Input 
-                            defaultValue="Giano" 
+                            defaultValue={detailUser && detailUser.username}
                             className="border-gray-200 rounded-full"
+                            onChange={(e) => handleChangeUserData("username", e.target.value)}
                           />
                         </div>
                         <div className="space-y-2">
                           <label className="text-sm text-gray-500">Gmail</label>
                           <Input 
-                            defaultValue="SakieGiano" 
+                            defaultValue={detailUser && detailUser.email} 
                             className="border-gray-200 rounded-full"
+                            onChange={(e) => handleChangeUserData("email", e.target.value)}
                           />
                           <p className="text-xs text-gray-400">Available change in 23/10/2025</p>
                         </div>
                         <div className="space-y-2">
                           <label className="text-sm text-gray-500">Date Of Birthday</label>
                           <Input 
-                            defaultValue="25-Mei-2004" 
+                            defaultValue={detailUser && detailUser.dateBirth}
                             className="border-gray-200 rounded-full"
+                            onChange={(e) => handleChangeUserData("dateBirth", e.target.value)}
                           />
                         </div>
                         <div className="space-y-2">
                           <label className="text-sm text-gray-500">Gender</label>
                           <Input 
-                            defaultValue="Laki-Laki" 
+                            defaultValue={detailUser && detailUser.gender}
                             className="border-gray-200 rounded-full"
+                            onChange={(e) => handleChangeUserData("gender", e.target.value)}
                           />
                         </div>
                       </div>
                       {/* Save Button */}
                       <div className="flex justify-end">
-                        <Button className="bg-[#FF5C35] hover:bg-[#FF5C35]/90 text-white rounded-full px-6">
-                          Save Changes
+                        <Button disabled={loadingUpdateUser} className="bg-[#FF5C35] hover:bg-[#FF5C35]/90 text-white rounded-full px-6" onClick={putUserDetail}>
+                          {loadingUpdateUser ? <LoadingSpinner /> : "Save Changes"}
                         </Button>
                       </div>
                     </div>
