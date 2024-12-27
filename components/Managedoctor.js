@@ -109,10 +109,10 @@ export function Home() {
   const getDoctor = () => {
     axiosInstance.get('/doctor')
     .then(response =>{
-      setData(response.data)
+      setData(response.data.payload)
     })
     .catch(error =>{
-      console.error(error)
+      console.log(error)
     });
   }
 
@@ -271,7 +271,14 @@ export function Home() {
             />
 
             {/* Schedule Input */}
-            <div className="space-y-2">
+            <Input
+              type="text"
+              placeholder="jadwal"
+              value={jadwal}
+              onChange={(e) => setJadwal(e.target.value)}
+              required
+            />
+            {/* <div className="space-y-2">
               <label className="text-sm font-medium">Jadwal</label>
               <div className="grid grid-cols-6 gap-2 max-h-60 overflow-y-auto">
                 {timeSlots.map((time) => (
@@ -290,7 +297,7 @@ export function Home() {
                   </label>
                 ))}
               </div>
-            </div>
+            </div> */}
 
             <Button type="submit" className="w-full bg-orange-500 text-white hover:bg-orange-600">
               Submit
@@ -305,7 +312,7 @@ export function Home() {
             {data.length ? data.map((item, index) => (
               <div key={index} className="flex items-start space-x-4 p-2 border rounded-lg">
                 <Image
-                  src={"/images/logo_malee.png"}
+                  src={item.images}
                   alt={item.name}
                   width={64}
                   height={64}
@@ -316,7 +323,7 @@ export function Home() {
                   <p className="text-sm text-gray-600">{item.speciality}</p>
                   <p className="text-sm text-gray-600">{item.email}</p>
                   <p className="text-sm text-gray-600">
-                    Jadwal: {item.jadwal.join(', ')}
+                    Jadwal: {item.practiceDay}
                   </p>
                 </div>
                 <div className="flex space-x-2">
@@ -382,7 +389,7 @@ export function Home() {
             <Input
               type="email"
               placeholder="Email"
-              value={editItem?.gmail || ""}
+              value={editItem?.email || ""}
               onChange={(e) => setEditItem(editItem ? { ...editItem, gmail: e.target.value } : null)}
             />
 
@@ -390,12 +397,18 @@ export function Home() {
             <Input
               type="text"
               placeholder="Specialist"
-              value={editItem?.spesialist || ""}
+              value={editItem?.speciality || ""}
               onChange={(e) => setEditItem(editItem ? { ...editItem, spesialist: e.target.value } : null)}
             />
 
             {/* Schedule Input */}
-            <div className="space-y-2">
+            <Input
+              type="text"
+              placeholder="jadwal"
+              value={editItem?.practiceDay || ""}
+              onChange={(e) => setEditItem(editItem ? { ...editItem, jadwal: e.target.value } : null)}
+            />
+            {/* <div className="space-y-2">
               <label className="text-sm font-medium">Jadwal</label>
               <div className="grid grid-cols-6 gap-2 max-h-60 overflow-y-auto">
                 {timeSlots.map((time) => (
@@ -415,7 +428,7 @@ export function Home() {
                   </label>
                 ))}
               </div>
-            </div>
+            </div> */}
 
             <Button
               onClick={() => handleUpdateDoctor(editItem.doctorId)}
