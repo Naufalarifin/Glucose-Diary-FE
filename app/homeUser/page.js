@@ -8,7 +8,7 @@ import axiosInstance from "@/lib/axios"
 import { ChevronLeft, ChevronRight, LogOut, Settings, ShieldOff, User } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { use, useEffect, useRef, useState } from 'react'
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
 
 export default function HomeUser() {
@@ -31,6 +31,8 @@ export default function HomeUser() {
     const [loadingUpdateUser, setLoadingUpdateUser] = useState(false)
     const [userData, setUserData] = useState(null)
     const [doctorData, setdoctorData] = useState(null)
+    const [weeklySugar, setWeeklySugar] = useState(0)
+    const [userAnalyze, setUserAnalyze] = useState("")
     const fileInputRef = useRef(null)
 
   const handleChangeImage = () => {
@@ -228,6 +230,97 @@ export default function HomeUser() {
     })
   }
 
+  
+  const modelPintar = async () => {
+    const sugarThreshold = 200;
+    const age = userData ? new Date().getFullYear() - new Date(userData.dateBirth).getFullYear() : 0;
+
+    if (userData) {
+      await axiosInstance.get(`/food-record/week-data`)
+      .then(response => {
+        const sugarLevelSum = response.data.payload
+          .filter(record => record.user.userId === userData.userId) // Filter records by userId
+          .reduce((sum, record) => sum + record.food.sugarLevel, 0);
+        setWeeklySugar(sugarLevelSum)
+      })
+      .catch(error => {
+        console.log(error)
+      })
+    
+      if (weeklySugar > sugarThreshold) {
+          if (age > 70) {
+              if (weeklySugar > sugarThreshold * 2) {
+                  setUserAnalyze("Usia di atas 70 tahun dengan konsumsi gula sangat tinggi meningkatkan risiko gagal ginjal, penyakit jantung, dan diabetes akut.");
+              } else {
+                  setUserAnalyze("Usia di atas 70 tahun dengan konsumsi gula tinggi meningkatkan risiko komplikasi metabolisme. Kurangi gula segera.");
+              }
+          } else if (age > 60) {
+              if (weeklySugar > sugarThreshold * 1.8) {
+                  setUserAnalyze("Usia 60–70 tahun dengan konsumsi gula tinggi meningkatkan risiko serangan jantung dan komplikasi kronis.");
+              } else {
+                  setUserAnalyze("Konsumsi gula berlebih di usia ini meningkatkan risiko tekanan darah tinggi dan resistensi insulin.");
+              }
+          } else if (age > 50) {
+              if (gender.equalsIgnoreCase("Female") && weeklySugar > sugarThreshold * 1.5) {
+                  setUserAnalyze("Wanita di usia 50-an berisiko osteoporosis dan diabetes akibat konsumsi gula tinggi.");
+              } else if (gender.equalsIgnoreCase("Male") && weeklySugar > sugarThreshold * 1.4) {
+                  setUserAnalyze("Pria di usia 50-an dengan konsumsi gula tinggi berisiko gangguan metabolisme dan hipertensi.");
+              } else {
+                  setUserAnalyze("Konsumsi gula Anda terlalu tinggi. Risiko diabetes meningkat di usia 50-an.");
+              }
+          } else if (age > 40) {
+              if (weeklySugar > sugarThreshold * 1.5) {
+                  setUserAnalyze("Usia 40-an dengan konsumsi gula tinggi meningkatkan risiko obesitas dan resistensi insulin.");
+              } else if (gender.equalsIgnoreCase("Female")) {
+                  setUserAnalyze("Wanita di usia 40-an berisiko gangguan hormonal akibat gula berlebih.");
+              } else {
+                  setUserAnalyze("Pria di usia 40-an berisiko perlemakan hati dengan konsumsi gula tinggi.");
+              }
+          } else if (age > 30) {
+              if (weeklySugar > sugarThreshold * 1.3) {
+                  setUserAnalyze("Konsumsi gula tinggi di usia 30-an dapat memicu gangguan metabolisme dan penumpukan lemak.");
+              } else {
+                  setUserAnalyze("Konsumsi gula berlebih di usia ini dapat meningkatkan risiko penyakit jangka panjang.");
+              }
+          } else if (age > 20) {
+              if (weeklySugar > sugarThreshold * 1.2) {
+                  setUserAnalyze("Usia 20-an dengan konsumsi gula tinggi berisiko gangguan pankreas dan resistensi insulin.");
+              } else {
+                  setUserAnalyze("Konsumsi gula tinggi di usia muda dapat memengaruhi fungsi tubuh jangka panjang.");
+              }
+          } else {
+              if (weeklySugar > sugarThreshold) {
+                  setUserAnalyze("Remaja dengan konsumsi gula tinggi berisiko obesitas, kerusakan gigi, dan gangguan kesehatan lainnya.");
+              } else {
+                  setUserAnalyze("Konsumsi gula Anda masih terlalu tinggi untuk usia muda. Kurangi makanan manis.");
+              }
+          }
+      } else if (weeklySugar > sugarThreshold * 0.8) {
+          if (age < 20) {
+              setUserAnalyze("Konsumsi gula sedikit tinggi untuk usia remaja. Kurangi konsumsi makanan manis.");
+          } else if (age > 40) {
+              setUserAnalyze("Konsumsi gula Anda sedikit di atas ambang aman. Pertimbangkan pengurangan gula lebih lanjut.");
+          } else {
+              setUserAnalyze("Konsumsi gula sedikit tinggi, tetapi masih dalam batas wajar. Tetap perhatikan pola makan.");
+          }
+      } else if (weeklySugar < sugarThreshold * 0.5) {
+          if (age > 60) {
+              setUserAnalyze("Konsumsi gula rendah untuk usia di atas 60 tahun. Ini baik untuk kesehatan jangka panjang.");
+          } else if (age > 30) {
+              setUserAnalyze("Konsumsi gula Anda rendah. Ini menunjukkan pola makan yang sehat.");
+          } else {
+              setUserAnalyze("Konsumsi gula rendah baik untuk usia muda. Pastikan energi cukup untuk aktivitas harian.");
+          }
+      } else {
+          setUserAnalyze("Konsumsi gula Anda berada dalam batas aman. Pertahankan pola makan ini.");
+      }
+    }
+  }
+
+  useEffect(() => {
+    modelPintar()
+  }, [userData])
+
   return (
     <div className="flex flex-col h-screen bg-white overflow-hidden">
       {/* Header */}
@@ -364,36 +457,29 @@ export default function HomeUser() {
                 }  `}
               >
                 {/* Your Goal For Today */}
-                <div className="bg-white border border-gray-200 rounded-lg p-6 h-48">
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
                   <h1 className="text-2xl font-bold mb-4">Hi, {userData ? userData.username : ""}</h1>
                   <p className="text-gray-600">Good Luck</p>
                 </div>
 
                 {/* Reminder */}
                 <div className="bg-white border border-gray-200 rounded-lg p-6">
-                  <h2 className="text-xl font-semibold mb-4">REMINDER</h2>
-                  <div className="grid md:grid-cols-4 grid-cols-1 gap-4">
+                  <h2 className="text-xl font-semibold mb-4">MODEL PINTAR</h2>
+                  <div className="grid md:grid-cols-3 grid-cols-1 gap-4 mb-4">
                     <div className="text-center">
-                      <Image src="/images/water.png" alt="Water" width={40} height={40} className="mx-auto mb-2" />
-                      <p className="font-semibold">Water</p>
-                      <p className="text-sm text-gray-600">4L</p>
+                      <p className="font-semibold">Age</p>
+                      <p className="text-lg">{userData ? new Date().getFullYear() - new Date(userData.dateBirth).getFullYear() : 0}</p>
                     </div>
                     <div className="text-center">
-                      <Image src="/images/moon.png" alt="Sleep" width={40} height={40} className="mx-auto mb-2" />
-                      <p className="font-semibold">Sleep</p>
-                      <p className="text-sm text-gray-600">8h</p>
+                      <p className="font-semibold">Weekly Sugar</p>
+                      <p className="text-lg">{weeklySugar}gr</p>
                     </div>
                     <div className="text-center">
-                      <Image src="/images/calories.png" alt="Calories" width={52} height={40} className="mx-auto mb-2" />
-                      <p className="font-semibold">Calories</p>
-                      <p className="text-sm text-gray-600">1500kcal</p>
-                    </div>
-                    <div className="text-center">
-                      <Image src="/images/carbohydrate.png" alt="Carbohydrate" width={42} height={40} className="mx-auto mb-2" />
-                      <p className="font-semibold">Carbohydrate</p>
-                      <p className="text-sm text-gray-600">80g</p>
+                      <p className="font-semibold">Sugar Threshold</p>
+                      <p className="text-lg">200gr</p>
                     </div>
                   </div>
+                  <p className="font-normal">{userAnalyze}</p>
                 </div>
               </div>
             )}
