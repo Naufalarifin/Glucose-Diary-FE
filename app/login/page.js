@@ -44,7 +44,7 @@ export default function CreateAccount() {
     }
   
     try {
-      const response = await axios.post('https://absolute-chicken-wsa-server-a1ecd4e0.koyeb.app/login', urlEncodedPayload, {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/login`, urlEncodedPayload, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -52,7 +52,7 @@ export default function CreateAccount() {
       });
   
       if (response.status === 200) {
-        console.log('Login successful:', response.data);
+        localStorage.setItem("userData", JSON.stringify(response.data));
         setShowSuccessModal(true);
       } else {
         console.log('Login failed:', response.status, response.data);

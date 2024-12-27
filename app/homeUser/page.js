@@ -29,6 +29,8 @@ export default function HomeUser() {
     const [searchFood, setSearchFood] = useState("")
     const [detailUser, setDetailUser] = useState(null)
     const [loadingUpdateUser, setLoadingUpdateUser] = useState(false)
+    const [userData, setUserData] = useState(null)
+    const [doctorData, setdoctorData] = useState(null)
     const fileInputRef = useRef(null)
 
   const handleChangeImage = () => {
@@ -38,12 +40,19 @@ export default function HomeUser() {
     useEffect(() => {
       axiosInstance.get('/food')
       .then(response =>{
-        setData(response.data)
+        setData(response.data.payload)
       })
       .catch(error =>{
         console.error(error)
       });
     }, []);
+
+
+    useEffect(() => {
+      if (typeof window !== "undefined"){
+        setUserData(JSON.parse(localStorage.getItem("userData")))
+      }
+    }, [])
 
     const foodHistory = [
         { date: 'Today', items: [
@@ -89,7 +98,7 @@ export default function HomeUser() {
   }
 
   const handleDoctorSelect = (doctorId) => {
-    const doctor = doctors.find(d => d.id === doctorId)
+    const doctor = doctorData.find(d => d.doctorId === doctorId)
     setSelectedDoctor(doctorId)
     setSelectedDoctorDetails(doctor)
     setActiveSection('doctorDetails')
@@ -105,89 +114,8 @@ export default function HomeUser() {
     router.push('/login')
   }
   
-  const appointmentTypes = ["Male", "Female", "Child"]
-  const doctors = [
-    {
-      id: 1,
-      name: 'Dr. Wisnu Satrio',
-      spesialist: 'Endrokrinolog',
-      gmail: 'wisnu@gmail.com',
-      image: '/images/doctor-1.jpg',
-      jadwal: ['senin', 'selasa', 'rabu', 'jumat', 'sabtu'],
-    },
-    {
-      id: 2,
-      name: 'Dr. Ananta Firdiansyah',
-      spesialist: 'General',
-      gmail: 'ananta@gmail.com',
-      image: '/images/doctor-2.jpg',
-      jadwal: ['08:00', '09:00', '10:00', '14:00', '15:00', '16:00'],
-    },
-    {
-      id: 3,
-      name: 'Dr. Dhafi Muhammad',
-      spesialist: 'Nutrition',
-      gmail: 'dhafi@gmail.com',
-      image: '/images/doctor-3.jpg',
-      jadwal: ['09:00', '10:00', '11:00', '15:00', '16:00', '17:00'],
-    },
-    {
-      id: 4,
-      name: 'Dr. Aryo Wahyu',
-      spesialist: 'Nutrition',
-      gmail: 'aryo@gmail.com',
-      image: '/images/dokterElnino.jpg',
-      jadwal: ['09:00', '10:00'],
-    },
-    {
-      id: 5,
-      name: 'Dr. Arifin Hakim Suza',
-      spesialist: 'Endokrinolog',
-      gmail: 'hakim@gmail.com',
-      image: '/images/dokterprof.jpg',
-      jadwal: ['15:00', '16:00', '17:00'],
-    },
-    {
-      id: 6,
-      name: 'Dr. Sakie Suza',
-      spesialist: 'Nutrition',
-      gmail: 'Sakie@gmail.com',
-      image: '/images/Giano.png',
-      jadwal: ['09:00', '10:00', '15:00', '16:00'],
-    },
-    {
-      id: 7,
-      name: 'Dr. Naufal Arifin',
-      spesialist: 'General',
-      gmail: 'Naufala@gmail.com',
-      image: '/images/doctor-7.jpg',
-      jadwal: ['17:00'],
-    },
-    {
-      id: 8,
-      name: 'Dr. Naufal Hakim',
-      spesialist: 'Nutrition',
-      gmail: 'Naufal@gmail.com',
-      image: '/images/doctor-8.jpg',
-      jadwal: ['09:00', '10:00', '15:00', '16:00'],
-    },
-    {
-      id: 9,
-      name: 'Dr. Bintang Rizky',
-      spesialist: 'Nutrition',
-      gmail: 'Bintang@gmail.com',
-      image: '/images/doctor-8.jpg',
-      jadwal: ['15:00', '16:00', '17:00'],
-    },
-    {
-      id: 10,
-      name: 'Dr. Moza Qonita',
-      spesialist: 'General',
-      gmail: 'Moza@gmail.com',
-      image: '/images/doctor-8.jpg',
-      jadwal: ['09:00', '10:00'],
-    }
-  ]
+
+ 
   const sugarData = [
     { period: "Week 1", sugar: 315 },
     { period: "Week 2", sugar: 280 },
@@ -200,14 +128,22 @@ export default function HomeUser() {
     item.name.toLowerCase().includes(searchFood.toLowerCase())
   )
 
+  const getFormattedDate = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const handleSubmitFoodRecord = () => {
     const payload = {
-      record_date: new Date().toLocaleDateString(),
-      food_id: selectedFood.foodID,
-      user_id: 24 
+      recordDate: getFormattedDate(),
+      food: selectedFood,
+      user: userData
     }
 
-    axiosInstance.post('/foodRecord', payload)
+    axiosInstance.post('/food-record', payload)
     .then(() => {
       alert("Food Record Berhasil Ditambahkan")
     })
@@ -217,9 +153,10 @@ export default function HomeUser() {
   }
 
   const getUserDetail = () => {
-    axiosInstance.get(`/user/${24}`)
+    axiosInstance.get(`/user/${userData.userId}`)
     .then(response => {
-      setDetailUser(response.data)
+      localStorage.setItem("userData", JSON.stringify(response.data.payload))
+      setDetailUser(response.data.payload)
     })
     .catch(error => {
       console.log(error)
@@ -233,12 +170,15 @@ export default function HomeUser() {
       email: detailUser.email,
       dateBirth: detailUser.dateBirth,
       gender: detailUser.gender,
-      password: detailUser.password
+      password: detailUser.password,
+      images: detailUser.images
     }
-    axiosInstance.put(`/user/${24}`, payload)
+    axiosInstance.put(`/user/${detailUser.userId}`, payload)
     .then(() => {
       alert("Data Berhasil Diubah")
       setLoadingUpdateUser(false)
+      getUserDetail()
+      location.reload()
     })
     .catch(error => {
       console.log(error)
@@ -260,6 +200,32 @@ export default function HomeUser() {
       }
       reader.readAsDataURL(file)
     }
+  }
+
+  const getDoctor = () => {
+    axiosInstance.get(`/doctor`)
+    .then(response => {
+      setdoctorData(response.data.payload)
+    })
+    .catch(error => {
+      console.log(error)
+    })
+  }
+
+  const handleSubmitBookDoctor = () => {
+    const payload = {
+      bookingDate: getFormattedDate(),
+      doctor: selectedDoctorDetails,
+      user: userData
+    }
+
+    axiosInstance.post('/book-doctor', payload)
+    .then(() => {
+      setbookSuccessModal(true)
+    })
+    .catch(error => {
+      console.log(error)
+    })
   }
 
   return (
@@ -289,13 +255,13 @@ export default function HomeUser() {
           </button>
           <div className="flex items-center space-x-2">
             <img
-                        src={profileImage}
+                        src={userData ? userData.images : null}
                         alt="Profile"
                         className="rounded-full object-cover bg-gray-100"
                         width={32}
                         height={32}
             />
-            <span className="font-semibold">Hi, </span>
+            <span className="font-semibold">Hi,{userData ? userData.username : ""}</span>
           </div>
         </div>
       </header>
@@ -351,7 +317,7 @@ export default function HomeUser() {
                 </li>
                 <li>
                     <button
-                        onClick={() => (handleSectionChange('consultDoctorSection1'),handleHomeChange('HDoctor')) }
+                        onClick={() => (handleSectionChange('consultDoctorSection1'),handleHomeChange('HDoctor'), getDoctor()) }
                         className={`flex items-center w-full text-left ${
                         activeSection === 'consultDoctorSection1' ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'
                         }`}
@@ -399,7 +365,7 @@ export default function HomeUser() {
               >
                 {/* Your Goal For Today */}
                 <div className="bg-white border border-gray-200 rounded-lg p-6 h-48">
-                  <h1 className="text-2xl font-bold mb-4">Hi, Giano</h1>
+                  <h1 className="text-2xl font-bold mb-4">Hi, {userData ? userData.username : ""}</h1>
                   <p className="text-gray-600">Good Luck</p>
                 </div>
 
@@ -439,7 +405,7 @@ export default function HomeUser() {
               >
                 {/* Your Goal For Today */}
                 <div className="bg-white border border-gray-200 rounded-lg p-6 h-48">
-                  <h1 className="text-2xl font-bold mb-4">Hi, Giano</h1>
+                  <h1 className="text-2xl font-bold mb-4">Hi, {userData ? userData.username : ""}</h1>
                   <p className="text-gray-600">Good Luck</p>
                 </div>
 
@@ -469,7 +435,7 @@ export default function HomeUser() {
                 >
                   {data.length ? data.map((item, index) => (
                     <div key={index} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                      <Image src={'/images/nasi_goreng.jpg'} alt={`Food Information ${index}`} width={400} height={200} className="w-full h-48 object-cover" />
+                      <Image src={item.images} alt={`Food Information ${index}`} width={400} height={200} className="w-full h-48 object-cover" />
                       <div className="p-4">
                         <div className="flex justify-between text-sm">
                           <span>{item.name}</span>
@@ -496,7 +462,7 @@ export default function HomeUser() {
              <div className="space-y-8">
                {/* Welcome Section */}
                <div className="bg-white border border-gray-200 rounded-lg p-6 h-48">
-                 <h1 className="text-2xl font-bold mb-4">Hi, Giano</h1>
+                 <h1 className="text-2xl font-bold mb-4">Hi, {userData ? userData.username : ""}</h1>
                  <p className="text-gray-600">Good Luck</p>
                </div>
      
@@ -550,7 +516,7 @@ export default function HomeUser() {
                                      alt={item.name}
                                      className="rounded-lg object-cover "
                                      height="50"
-                                     src={'/images/nasi_goreng.jpg'}
+                                     src={item.images}
                                      width="100"
                                    />
                                    <div className="flex flex-col items-start">
@@ -578,7 +544,7 @@ export default function HomeUser() {
         <div className="space-y-8">
           {/* Welcome Section */}
           <div className="bg-white border border-gray-200 rounded-lg p-6 h-48">
-            <h1 className="text-2xl font-bold mb-4">Hi, Giano</h1>
+            <h1 className="text-2xl font-bold mb-4">Hi, {userData ? userData.username : ""}</h1>
             <p className="text-gray-600">Good Luck</p>
           </div>
 
@@ -694,19 +660,19 @@ export default function HomeUser() {
                   <div className="bg-white border border-gray-200 rounded-lg p-4"> 
                     <div className="h-[250px] overflow-y-auto pr-2"> 
                       <div className="grid grid-cols-4 gap-3"> 
-                        {doctors.map((doctor) => (
+                        {doctorData && doctorData.map((doctor) => (
                           <button 
-                            key={doctor.id}
-                            onClick={() => (handleDoctorSelect(doctor.id),handleHomeChange('HDoctor'))}
+                            key={doctor.doctorId}
+                            onClick={() => (handleDoctorSelect(doctor.doctorId),handleHomeChange('HDoctor'))}
                             className={`flex flex-col items-center p-2 rounded-lg transition-all ${
-                            selectedDoctor === doctor.id
+                            selectedDoctor === doctor.doctorId
                             ? 'border-2 border-orange-500'
                             : 'border border-gray-200 hover:border-orange-200'
                             }`}
                           >
                             <div className="w-16 h-16 mb-2 rounded-lg overflow-hidden"> 
                               <Image
-                                src={doctor.image}
+                                src={doctor.images}
                                 alt={doctor.name}
                                 width={64}
                                 height={64}
@@ -714,7 +680,7 @@ export default function HomeUser() {
                               />
                             </div>
                             <h3 className="font-semibold text-center text-sm">{doctor.name}</h3> {/* Update 2: Added text-sm */}
-                            <p className="text-xs text-gray-600">{doctor.spesialist}</p>
+                            <p className="text-xs text-gray-600">{doctor.speciality}</p>
                           </button>
                         ))}
                       </div>
@@ -731,22 +697,22 @@ export default function HomeUser() {
                   <div className="flex flex-col items-center">
                     <div className="relative w-64 h-64 mb-4">
                         <Image
-                            src={selectedDoctorDetails.image}
+                            src={selectedDoctorDetails.images}
                             alt={selectedDoctorDetails.name}
                             fill
                             className="rounded-lg object-cover"
                         />
                     </div>
                     <h2 className="text-2xl font-bold">{selectedDoctorDetails.name}</h2>
-                    <p className="text-gray-600">{selectedDoctorDetails.spesialist} Specialist</p>
+                    <p className="text-gray-600">{selectedDoctorDetails.speciality} Specialist</p>
                   </div>
                   {/* Right Column - Booking Options */}
                   <div className="space-y-6">
                     {/* Working Hours */}
                     <div>
-                        <h3 className="font-semibold mb-1">Working Hours</h3>
+                        <h3 className="font-semibold mb-1">Working Day</h3>
                         <div className="flex flex-wrap gap-2">
-                          {selectedDoctorDetails.jadwal.map((time) => (
+                          {selectedDoctorDetails.practiceDay.split(",").map((time) => (
                             <Button
                               key={time}
                               variant={selectedTime === time ? "default" : "outline"}
@@ -775,25 +741,9 @@ export default function HomeUser() {
                         ))}
                       </div>
                     </div> */}
-                    {/* Appointment Type */}
-                    <div>
-                      <h3 className="font-semibold mb-3">Appointment For</h3>
-                      <div className="flex gap-2">
-                        {appointmentTypes.map((type) => (
-                          <Button
-                            key={type}
-                            variant={selectedType === type ? "default" : "outline"}
-                            onClick={() => setSelectedType(type)}
-                            className="w-24"
-                          >
-                            {type}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
                     {/* Book Now Button */}
                     <Button 
-                        onClick={() => setbookSuccessModal(true)}
+                        onClick={() => handleSubmitBookDoctor()}
                         className="w-full bg-orange-500 hover:bg-orange-600 text-white"
                         size="lg"
                     >
@@ -836,7 +786,7 @@ export default function HomeUser() {
                       {/* Profile Picture Section */}
                       <div className="flex items-center gap-4">
                         <img
-                          src={profileImage}
+                          src={userData ? userData.images : null}
                           alt="Profile"
                           className="h-12 w-12 rounded-full object-cover bg-gray-100"
                         />

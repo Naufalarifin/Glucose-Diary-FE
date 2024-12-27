@@ -71,7 +71,7 @@ export default function CreateAccount() {
       }
 
       const handleContinue = () => {
-        router.push('/homeUser')
+        router.push('/login')
       }
   
 
