@@ -58,7 +58,7 @@ export default function CreateAccount() {
         console.log('Login failed:', response.status, response.data);
       }
     } catch (error) {
-      console.error('Error during login:', error.response || error.message);
+      alert(error.response.data.error || "Something went wrong, please try again later");
     }
   };
 
