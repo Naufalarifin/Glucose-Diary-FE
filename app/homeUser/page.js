@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input"
 import { LoadingSpinner } from "@/components/ui/loading"
 import axiosInstance from "@/lib/axios"
 import { ChevronLeft, ChevronRight, LogOut, Settings, ShieldOff, User } from 'lucide-react'
+import moment from "moment"
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { use, useEffect, useRef, useState } from 'react'
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 
 export default function HomeUser() {
     const [data, setData] = useState([])
@@ -31,6 +32,8 @@ export default function HomeUser() {
     const [loadingUpdateUser, setLoadingUpdateUser] = useState(false)
     const [userData, setUserData] = useState(null)
     const [doctorData, setdoctorData] = useState(null)
+    const [bookDoctorData, setBookDoctor] = useState(null)
+    const [foodHistory, setFoodHistory] = useState(null)
     const [weeklySugar, setWeeklySugar] = useState(0)
     const [userAnalyze, setUserAnalyze] = useState("")
     const fileInputRef = useRef(null)
@@ -56,17 +59,6 @@ export default function HomeUser() {
       }
     }, [])
 
-    const foodHistory = [
-        { date: 'Today', items: [
-          { name: 'Nasi Rawon', description: 'Kurang Persiasi!', portion: '2 Porsi', image: '/images/nasi-rawon.jpg' },
-          { name: 'Nasi Goreng', description: 'Porsi aman!', portion: '1 Porsi', image: '/images/nasi-goreng.jpg' },
-          { name: 'Mie Goreng', description: 'Porsi Aman!', portion: '1 Porsi', image: '/images/mie-goreng.jpg' },
-        ]},
-        { date: 'Yesterday', items: [
-          { name: 'Nasi Goreng', description: 'Porsi aman!', portion: '1 Porsi', image: '/images/nasi-goreng.jpg' },
-        ]},
-    ]
-    
   const handleImageChange = (e) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -215,6 +207,17 @@ export default function HomeUser() {
     })
   }
 
+  const getBookDoctor = () => {
+    axiosInstance.get(`/book-doctor`)
+    .then(response => {
+      setBookDoctor(response.data.payload
+        .filter(record => record.user.userId === userData.userId))
+    })
+    .catch(error => {
+      console.log(error)
+    })
+  }
+
   const handleSubmitBookDoctor = () => {
     const payload = {
       bookingDate: getFormattedDate(),
@@ -317,6 +320,41 @@ export default function HomeUser() {
       }
     }
   }
+  
+  const getFoodHistory = () => {
+    axiosInstance.get(`/food-record`)
+    .then(response => {
+      setFoodHistory(response.data.payload
+        .filter(record => record.user.userId === userData.userId))
+    })
+    .catch(error => {
+      console.log(error)
+    })
+  }
+
+  const processDataForChart = (data) => {
+    if (data) {
+      const grouped = {};
+      
+      data.forEach((record) => {
+        const recordDate = moment(record.recordDate);
+        const weekOfMonth = Math.ceil(recordDate.date() / 7); // Calculate week in the month
+        // const monthYear = recordDate.format("MMMM yyyy");
+        const week = `Week ${weekOfMonth}`; // Format as "Week X of Month Year"
+  
+        if (!grouped[week]) {
+          grouped[week] = { sugarSum: 0, count: 0 };
+        }
+        grouped[week].sugarSum += record.food.sugarLevel;
+        grouped[week].count += 1;
+      });
+  
+      return Object.entries(grouped).map(([week, { sugarSum, count }]) => ({
+        period: week,
+        sugar:sugarSum,
+      }));
+    }
+  };
 
   useEffect(() => {
     modelPintar()
@@ -400,7 +438,7 @@ export default function HomeUser() {
                 </li>
                 <li>
                     <button
-                        onClick={() => (handleSectionChange('foodHistory'),handleHomeChange(''))}
+                        onClick={() => (handleSectionChange('foodHistory'),handleHomeChange(''),getFoodHistory())}
                         className={`flex items-center w-full text-left ${
                         activeSection === 'foodHistory' ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'
                         }`}
@@ -411,7 +449,7 @@ export default function HomeUser() {
                 </li>
                 <li>
                     <button
-                        onClick={() => (handleSectionChange('consultDoctorSection1'),handleHomeChange('HDoctor'), getDoctor()) }
+                        onClick={() => (handleSectionChange('consultDoctorSection1'),handleHomeChange('HDoctor'), getDoctor(), getBookDoctor()) }
                         className={`flex items-center w-full text-left ${
                         activeSection === 'consultDoctorSection1' ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'
                         }`}
@@ -492,7 +530,7 @@ export default function HomeUser() {
                 }  `}
               >
                 {/* Your Goal For Today */}
-                <div className="bg-white border border-gray-200 rounded-lg p-6 h-48">
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
                   <h1 className="text-2xl font-bold mb-4">Hi, {userData ? userData.username : ""}</h1>
                   <p className="text-gray-600">Good Luck</p>
                 </div>
@@ -500,8 +538,26 @@ export default function HomeUser() {
                 {/* Reminder */}
                 <div className="bg-white border border-gray-200 rounded-lg p-6">
                   <h2 className="text-xl font-semibold mb-4">STATUS BOOKING</h2>
-                  <div className="grid grid-cols-4 gap-4">
-                    
+                  <div className="flex w-full gap-2">
+                    {bookDoctorData && bookDoctorData.map((item, index) => (
+                      <div key={index} className="bg-white rounded-lg p-4 flex gap-4 min-w-full">
+                        <div className="w-24 h-24 mb-2 rounded-lg overflow-hidden"> 
+                          <Image
+                            src={item.doctor.images}
+                            alt={item.doctor.name}
+                            width={64}
+                            height={64}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex flex-col items-start">
+                          <div className="p-1 bg-black text-white text-xs rounded-lg">Booked</div>
+                          <h3 className="font-semibold text-center text-base">{item.doctor.name}</h3> {/* Update 2: Added text-sm */}
+                          <p className="text-sm text-gray-600">{item.doctor.speciality}</p>
+                          <p className="text-sm text-gray-600">{item.bookingDate}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -641,7 +697,7 @@ export default function HomeUser() {
             <h2 className="text-xl font-bold mb-6">Sugar Consumption (Per 7-Day Period)</h2>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={sugarData}>
+                <LineChart data={processDataForChart(foodHistory)}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis 
                     dataKey="period" 
@@ -652,6 +708,16 @@ export default function HomeUser() {
                     axisLine={false}
                     tickLine={false}
                     ticks={[0, 90, 180, 270, 360]}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: "#fff",
+                      border: "1px solid #ccc",
+                      borderRadius: "5px",
+                      padding: "10px",
+                    }} 
+                    labelStyle={{ fontWeight: "bold" }} 
+                    formatter={(value) => `${value} gr`}
                   />
                   <Line
                     type="monotone"
@@ -681,26 +747,22 @@ export default function HomeUser() {
           </div>
 
           <div className="space-y-8">
-            {foodHistory.map((day, dayIndex) => (
-              <div key={dayIndex}>
-                <h3 className="text-sm font-medium text-gray-500 mb-4">{day.date}</h3>
-                <div className="space-y-4">
-                  {day.items.map((item, itemIndex) => (
-                    <div key={itemIndex} className="flex items-start gap-4">
-                      <Image
-                        src={item.image}
-                        alt={item.name}
-                        width={64}
-                        height={64}
-                        className="rounded-lg"
-                      />
-                      <div className="flex-1">
-                        <h4 className="font-medium">{item.name}</h4>
-                        <p className="text-sm text-rose-500">{item.description}</p>
-                        <p className="text-sm font-medium">{item.portion}</p>
-                      </div>
-                    </div>
-                  ))}
+            {foodHistory && foodHistory.map((item, index) => (
+              <div key={index}>
+                {/* <h3 className="text-sm font-medium text-gray-500 mb-4">{day.date}</h3> */}
+                <div key={index} className="flex items-start gap-4">
+                  <Image
+                    src={item.food.images}
+                    alt={item.food.name}
+                    width={100}
+                    height={100}
+                    className="rounded-lg"
+                  />
+                  <div className="flex-1">
+                    <h4 className="font-medium text-lg">{item.food.name}</h4>
+                    <p className="font-medium text-base">{item.food.sugarLevel}gr</p>
+                    <p className="font-medium text-sm text-gray-400">{item.recordDate}</p>
+                  </div>
                 </div>
               </div>
             ))}
@@ -834,6 +896,7 @@ export default function HomeUser() {
                         onClick={() => handleSubmitBookDoctor()}
                         className="w-full bg-orange-500 hover:bg-orange-600 text-white"
                         size="lg"
+                        disabled={bookDoctorData.length > 0}
                     >
                         Book Now
                     </Button>
@@ -847,7 +910,7 @@ export default function HomeUser() {
                 <div className="bg-white rounded-xl p-16 max-w-sm w-full text-center">
                   <Image src="/images/logo_succes.png" alt="Female" width={300} height={300}/>
                   <h2 className="text-xl font-bold flex items-center justify-center mb-4 mt-10">Book Success</h2>
-                  <Button onClick={() => (handleSectionChange('consultDoctorSection1'),handleHomeChange('Home'),setbookSuccessModal(false))} className="w-full bg-orange-500 hover:bg-orange-600 text-white">
+                  <Button onClick={() => (handleSectionChange('consultDoctorSection1'),handleHomeChange('HDoctor'),setbookSuccessModal(false), getBookDoctor())} className="w-full bg-orange-500 hover:bg-orange-600 text-white">
                     Back to Booking Doctor Menu
                   </Button>
                 </div>
