@@ -19,6 +19,7 @@ export function HomeAdminUser() {
   const [password, setPassword] = useState("")
   const [gender, setGender] = useState("")
   const [birthday, setBirthday] = useState("")
+  const [images, setImages] = useState("")
   const [editItem, setEditItem] = useState(null)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -85,7 +86,8 @@ export function HomeAdminUser() {
       password: password,
       email: gmail,
       dateBirth: birthday,
-      gender: gender
+      gender: gender,
+      images: images
     }
 
     axiosInstance.post('/user', payload)
@@ -97,6 +99,7 @@ export function HomeAdminUser() {
       setPassword("")
       setBirthday("")
       setGender("")
+      setImages("")
       setLoadingUpdateUser(false)
     })
     .catch(error => {
@@ -110,7 +113,7 @@ export function HomeAdminUser() {
     axiosInstance.delete(`/user/${id}`)
     .then(response => {
       console.log(response.status)
-      if (response.status != 200 || response.status != 201) {
+      if (response.status != 200) {
         alert("Error occured, please try again")
       } else {
         alert("user berhasil dihapus")
@@ -126,11 +129,12 @@ export function HomeAdminUser() {
 
   const handleUpdateUser = (id) => {
     const payload ={
-      username: editItem.name,
+      username: editItem.username,
       password: editItem.password,
-      email: editItem.gmail,
-      dateBirth: editItem.birthday,
-      gender: editItem.gender
+      email: editItem.email,
+      dateBirth: editItem.dateBirth,
+      gender: editItem.gender,
+      images: editItem.images
     }
     axiosInstance.put(`/user/${id}`,payload)
     .then(() =>{
@@ -152,26 +156,13 @@ export function HomeAdminUser() {
           <h2 className="text-xl font-bold mb-6">Insert data user</h2>
           <form onSubmit={handleSubmitUser} className="space-y-4">
             {/* Image Upload */}
-            <div className="w-52 border-dashed border-gray-200 rounded-lg p-4 text-center ml-24 ">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageUpload(e)}
-                className="hidden"
-                id="user-image"
-              />
-              <label htmlFor="user-image" className="cursor-pointer">
-                <div className="w-32 h-32 mx-auto">
-                  <Image
-                    src={userImage}
-                    alt="User preview"
-                    width={128}
-                    height={128}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                </div>
-              </label>
-            </div>
+
+            <Input
+              placeholder="Url Images"
+              value={images}
+              onChange={(e) => setImages(e.target.value)}
+              required
+            />
 
             {/* User Name Input */}
             <Input
@@ -234,13 +225,13 @@ export function HomeAdminUser() {
           <div className="space-y-4 max-h-[500px] overflow-y-auto">
             {data.length ? data.map((item, index) => (
               <div key={index} className="flex items-start space-x-4 p-4 border rounded-lg">
-                {/* <Image
-                  src={item.images}
+                 <Image
+                  src={item?.images || "/images/profile.kosong.png"}
                   alt={item.username}
                   width={64}
                   height={64}
                   className="w-16 h-16 rounded-lg object-cover"
-                /> */}
+                />
                 <div className="flex-1">
                   <h3 className="font-semibold">{item.username}</h3>
                   <p className="text-sm text-gray-600">{item.email}</p>
@@ -277,43 +268,28 @@ export function HomeAdminUser() {
             <DialogTitle>Edit User Item</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {/* Image Upload */}
-            <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageUpload(e, true)}
-                className="hidden"
-                id="edit-user-image"
-              />
-              <label htmlFor="edit-user-image" className="cursor-pointer">
-                <div className="w-32 h-32 mx-auto mb-2">
-                  <Image
-                    src={editItem?.images || "/images/nasi_goreng.jpg"}
-                    alt="User preview"
-                    width={128}
-                    height={128}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                </div>
-                <span className="text-sm text-gray-500">Input picture</span>
-              </label>
-            </div>
+          
+          
+          <Input
+              placeholder="Url Images"
+              value={editItem?.images || ""}
+              onChange={(e) => setEditItem(editItem ? { ...editItem, images: e.target.value } : null)}
+            />
 
             {/* User Name Input */}
             <Input
               placeholder="User Name"
               value={editItem?.username || ""}
-              onChange={(e) => setEditItem(editItem ? { ...editItem, name: e.target.value } : null)}
+              onChange={(e) => setEditItem(editItem ? { ...editItem, username: e.target.value } : null)}
             />
 
             <Input
               type="email"
               placeholder="Email"
               value={editItem?.email || ""}
-              onChange={(e) => setEditItem(editItem ? { ...editItem, gmail: e.target.value } : null)}
+              onChange={(e) => setEditItem(editItem ? { ...editItem, email: e.target.value } : null)}
             />
-            <div className="relative">
+            {/* <div className="relative">
               <Input
                 type={showEditPassword ? "text" : "password"}
                 placeholder="Password"
@@ -329,7 +305,7 @@ export function HomeAdminUser() {
               >
                 {showEditPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
-            </div>
+            </div> */}
             <Select 
               value={editItem?.gender || ""} 
               onValueChange={(value) => setEditItem(editItem ? { ...editItem, gender: value } : null)}
@@ -346,7 +322,7 @@ export function HomeAdminUser() {
               type="date"
               placeholder="Birthday"
               value={editItem?.dateBirth || ""}
-              onChange={(e) => setEditItem(editItem ? { ...editItem, birthday: e.target.value } : null)}
+              onChange={(e) => setEditItem(editItem ? { ...editItem, dateBirth: e.target.value } : null)}
             />
 
             <Button

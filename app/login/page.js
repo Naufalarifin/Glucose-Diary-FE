@@ -30,35 +30,43 @@ export default function CreateAccount() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
-    // Replace with your actual payload data
-    const payload = {
-      username: formData.username,
-      password: formData.password,
-    };
-  
-    // Encode payload as application/x-www-form-urlencoded
-    const urlEncodedPayload = new URLSearchParams();
-    for (const key in payload) {
-      urlEncodedPayload.append(key, payload[key]);
-    }
-  
-    try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/login`, urlEncodedPayload, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        withCredentials: true
-      });
-  
-      if (response.status === 200) {
-        localStorage.setItem("userData", JSON.stringify(response.data));
-        setShowSuccessModal(true);
-      } else {
-        console.log('Login failed:', response.status, response.data);
+
+    if (formData.username.includes('food_')) {
+      alert("error, are you admin?")
+    } else if (formData.username.includes('doctor_')) {
+      alert("error, are you admin?")
+    }else if (formData.username.includes('user_')) {
+      alert("error, are you admin?") 
+    } else {
+      // Replace with your actual payload data
+      const payload = {
+        username: formData.username,
+        password: formData.password,
+      };
+    
+      // Encode payload as application/x-www-form-urlencoded
+      const urlEncodedPayload = new URLSearchParams();
+      for (const key in payload) {
+        urlEncodedPayload.append(key, payload[key]);
       }
-    } catch (error) {
-      alert(error.response.data.error || "Something went wrong, please try again later");
+    
+      try {
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/login`, urlEncodedPayload, {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          withCredentials: true
+        });
+      
+        if (response.status === 200) {
+          localStorage.setItem("userData", JSON.stringify(response.data));
+          setShowSuccessModal(true);
+        } else {
+          console.log('Login failed:', response.status, response.data);
+        }
+      } catch (error) {
+        alert(error.response.data.error || "Something went wrong, please try again later");
+      }
     }
   };
 

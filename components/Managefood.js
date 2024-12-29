@@ -14,8 +14,7 @@ export function Home() {
   const [data, setData] = useState([])
   const [foodImage, setFoodImage] = useState("/images/logo_inputPicture.png")
   const [foodName, setFoodName] = useState("")
-  const [carbs, setCarbs] = useState("")
-  const [cholesterol, setCholesterol] = useState("")
+  const [images, setImages] = useState("")
   const [sugar, setSugar] = useState("")
   const [editItem, setEditItem] = useState(null)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -41,7 +40,8 @@ export function Home() {
     e.preventDefault()
     const payload = {
       name: foodName,
-      sugarLevel: sugar
+      sugarLevel: sugar,
+      images: images
     }
 
     axiosInstance.post('/food', payload)
@@ -50,6 +50,7 @@ export function Home() {
       getFood()
       setFoodName("")
       setSugar("")
+      setImages("")
       setLoadingUpdateUser(false)
     })
     .catch(error => {
@@ -63,7 +64,7 @@ export function Home() {
     axiosInstance.delete(`/food/${id}`)
     .then(response => {
       console.log(response.status)
-      if (response.status != 200 || response.status != 201) {
+      if (response.status != 200) {
         alert("Error occured, please try again")
       } else {
         alert("food berhasil dihapus")
@@ -80,7 +81,8 @@ export function Home() {
   const handleUpdateFood = (id) => {
     const payload ={
       name: editItem.name,
-      sugarLevel: editItem.sugarLevel
+      sugarLevel: editItem.sugarLevel,
+      images: editItem.images
     }
     axiosInstance.put(`/food/${id}`,payload)
     .then(() =>{
@@ -124,29 +126,16 @@ export function Home() {
         <Card className="p-6">
           <h2 className="text-xl font-bold mb-6">Insert data food</h2>
           <form onSubmit={handleSubmitFood} className="space-y-4">
-            {/* Image Upload */}
-            <div className="  w-52 border-dashed border-gray-200 rounded-lg p-4 text-center ml-24 ">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageUpload(e)}
-                className="hidden"
-                id="food-image"
-              />
-              <label htmlFor="food-image" className="cursor-pointer">
-                <div className="w-32 h-32 mx-auto">
-                  <Image
-                    src={foodImage}
-                    alt="Food preview"
-                    width={128}
-                    height={128}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                </div>
-              </label>
-            </div>
 
             {/* Food Name Input */}
+
+            <Input
+              placeholder="images"
+              value={images}
+              onChange={(e) => setImages(e.target.value)}
+              required
+            />
+
             <Input
               placeholder="Food Name"
               value={foodName}
@@ -216,28 +205,11 @@ export function Home() {
             <DialogTitle>Edit Food Item</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {/* Image Upload */}
-            <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageUpload(e, true)}
-                className="hidden"
-                id="edit-food-image"
-              />
-              <label htmlFor="edit-food-image" className="cursor-pointer">
-                <div className="w-32 h-32 mx-auto mb-2">
-                  <Image
-                    src={editItem?.image || "/images/nasigoreng.jpg"}
-                    alt="Food preview"
-                    width={128}
-                    height={128}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                </div>
-                <span className="text-sm text-gray-500">Input picture</span>
-              </label>
-            </div>
+            <Input
+              placeholder="Url Images"
+              value={editItem?.images || ""}
+              onChange={(e) => setEditItem(editItem ? { ...editItem, images: e.target.value } : null)}
+            />
 
             {/* Food Name Input */}
             <Input
@@ -252,7 +224,7 @@ export function Home() {
               type="number"
               placeholder="Sugar (g)"
               value={editItem?.sugarLevel || ""}
-              onChange={(e) => setEditItem(editItem ? { ...editItem, sugar: Number(e.target.value) } : null)}
+              onChange={(e) => setEditItem(editItem ? { ...editItem, sugarLevel: Number(e.target.value) } : null)}
             />
 
             <Button

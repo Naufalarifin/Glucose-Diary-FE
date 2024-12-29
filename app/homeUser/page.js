@@ -36,6 +36,8 @@ export default function HomeUser() {
     const [foodHistory, setFoodHistory] = useState(null)
     const [weeklySugar, setWeeklySugar] = useState(0)
     const [userAnalyze, setUserAnalyze] = useState("")
+    const [loadingDeleteBookDoctor, setLoadingDeleteBookDoctor] = useState(null)
+
     const fileInputRef = useRef(null)
 
   const handleChangeImage = () => {
@@ -106,6 +108,18 @@ export default function HomeUser() {
   const router = useRouter()
 
   const handleContinue = () => {
+    axiosInstance.post('http://localhost:8080/logout')
+    .then(() => {
+      console.log("user logged out")
+    })
+    .catch((error) => {
+      // Suppress 404 if user is successfully logged out
+      if (error.response && error.response.status === 404) {
+        console.warn('Ignore 404 on logout redirect');
+      } else {
+        console.error('Logout error:', error);
+      }
+    });
     router.push('/login')
   }
   
@@ -250,77 +264,81 @@ export default function HomeUser() {
       .catch(error => {
         console.log(error)
       })
-    
-      if (weeklySugar > sugarThreshold) {
-          if (age > 70) {
-              if (weeklySugar > sugarThreshold * 2) {
-                  setUserAnalyze("Usia di atas 70 tahun dengan konsumsi gula sangat tinggi meningkatkan risiko gagal ginjal, penyakit jantung, dan diabetes akut.");
-              } else {
-                  setUserAnalyze("Usia di atas 70 tahun dengan konsumsi gula tinggi meningkatkan risiko komplikasi metabolisme. Kurangi gula segera.");
-              }
-          } else if (age > 60) {
-              if (weeklySugar > sugarThreshold * 1.8) {
-                  setUserAnalyze("Usia 60–70 tahun dengan konsumsi gula tinggi meningkatkan risiko serangan jantung dan komplikasi kronis.");
-              } else {
-                  setUserAnalyze("Konsumsi gula berlebih di usia ini meningkatkan risiko tekanan darah tinggi dan resistensi insulin.");
-              }
-          } else if (age > 50) {
-              if (gender.equalsIgnoreCase("Female") && weeklySugar > sugarThreshold * 1.5) {
-                  setUserAnalyze("Wanita di usia 50-an berisiko osteoporosis dan diabetes akibat konsumsi gula tinggi.");
-              } else if (gender.equalsIgnoreCase("Male") && weeklySugar > sugarThreshold * 1.4) {
-                  setUserAnalyze("Pria di usia 50-an dengan konsumsi gula tinggi berisiko gangguan metabolisme dan hipertensi.");
-              } else {
-                  setUserAnalyze("Konsumsi gula Anda terlalu tinggi. Risiko diabetes meningkat di usia 50-an.");
-              }
-          } else if (age > 40) {
-              if (weeklySugar > sugarThreshold * 1.5) {
-                  setUserAnalyze("Usia 40-an dengan konsumsi gula tinggi meningkatkan risiko obesitas dan resistensi insulin.");
-              } else if (gender.equalsIgnoreCase("Female")) {
-                  setUserAnalyze("Wanita di usia 40-an berisiko gangguan hormonal akibat gula berlebih.");
-              } else {
-                  setUserAnalyze("Pria di usia 40-an berisiko perlemakan hati dengan konsumsi gula tinggi.");
-              }
-          } else if (age > 30) {
-              if (weeklySugar > sugarThreshold * 1.3) {
-                  setUserAnalyze("Konsumsi gula tinggi di usia 30-an dapat memicu gangguan metabolisme dan penumpukan lemak.");
-              } else {
-                  setUserAnalyze("Konsumsi gula berlebih di usia ini dapat meningkatkan risiko penyakit jangka panjang.");
-              }
-          } else if (age > 20) {
-              if (weeklySugar > sugarThreshold * 1.2) {
-                  setUserAnalyze("Usia 20-an dengan konsumsi gula tinggi berisiko gangguan pankreas dan resistensi insulin.");
-              } else {
-                  setUserAnalyze("Konsumsi gula tinggi di usia muda dapat memengaruhi fungsi tubuh jangka panjang.");
-              }
-          } else {
-              if (weeklySugar > sugarThreshold) {
-                  setUserAnalyze("Remaja dengan konsumsi gula tinggi berisiko obesitas, kerusakan gigi, dan gangguan kesehatan lainnya.");
-              } else {
-                  setUserAnalyze("Konsumsi gula Anda masih terlalu tinggi untuk usia muda. Kurangi makanan manis.");
-              }
-          }
-      } else if (weeklySugar > sugarThreshold * 0.8) {
-          if (age < 20) {
-              setUserAnalyze("Konsumsi gula sedikit tinggi untuk usia remaja. Kurangi konsumsi makanan manis.");
-          } else if (age > 40) {
-              setUserAnalyze("Konsumsi gula Anda sedikit di atas ambang aman. Pertimbangkan pengurangan gula lebih lanjut.");
-          } else {
-              setUserAnalyze("Konsumsi gula sedikit tinggi, tetapi masih dalam batas wajar. Tetap perhatikan pola makan.");
-          }
-      } else if (weeklySugar < sugarThreshold * 0.5) {
-          if (age > 60) {
-              setUserAnalyze("Konsumsi gula rendah untuk usia di atas 60 tahun. Ini baik untuk kesehatan jangka panjang.");
-          } else if (age > 30) {
-              setUserAnalyze("Konsumsi gula Anda rendah. Ini menunjukkan pola makan yang sehat.");
-          } else {
-              setUserAnalyze("Konsumsi gula rendah baik untuk usia muda. Pastikan energi cukup untuk aktivitas harian.");
-          }
-      } else {
-          setUserAnalyze("Konsumsi gula Anda berada dalam batas aman. Pertahankan pola makan ini.");
-      }
     }
   }
   
+  useEffect(() => {
+    const sugarThreshold = 200;
+    const age = userData ? new Date().getFullYear() - new Date(userData.dateBirth).getFullYear() : 0;
+    if (weeklySugar > sugarThreshold) {
+      if (age > 70) {
+          if (weeklySugar > sugarThreshold * 2) {
+              setUserAnalyze("Usia di atas 70 tahun dengan konsumsi gula sangat tinggi meningkatkan risiko gagal ginjal, penyakit jantung, dan diabetes akut.");
+          } else {
+              setUserAnalyze("Usia di atas 70 tahun dengan konsumsi gula tinggi meningkatkan risiko komplikasi metabolisme. Kurangi gula segera.");
+          }
+      } else if (age > 60) {
+          if (weeklySugar > sugarThreshold * 1.8) {
+              setUserAnalyze("Usia 60–70 tahun dengan konsumsi gula tinggi meningkatkan risiko serangan jantung dan komplikasi kronis.");
+          } else {
+              setUserAnalyze("Konsumsi gula berlebih di usia ini meningkatkan risiko tekanan darah tinggi dan resistensi insulin.");
+          }
+      } else if (age > 50) {
+          if (gender.equalsIgnoreCase("Female") && weeklySugar > sugarThreshold * 1.5) {
+              setUserAnalyze("Wanita di usia 50-an berisiko osteoporosis dan diabetes akibat konsumsi gula tinggi.");
+          } else if (gender.equalsIgnoreCase("Male") && weeklySugar > sugarThreshold * 1.4) {
+              setUserAnalyze("Pria di usia 50-an dengan konsumsi gula tinggi berisiko gangguan metabolisme dan hipertensi.");
+          } else {
+              setUserAnalyze("Konsumsi gula Anda terlalu tinggi. Risiko diabetes meningkat di usia 50-an.");
+          }
+      } else if (age > 40) {
+          if (weeklySugar > sugarThreshold * 1.5) {
+              setUserAnalyze("Usia 40-an dengan konsumsi gula tinggi meningkatkan risiko obesitas dan resistensi insulin.");
+          } else if (gender.equalsIgnoreCase("Female")) {
+              setUserAnalyze("Wanita di usia 40-an berisiko gangguan hormonal akibat gula berlebih.");
+          } else {
+              setUserAnalyze("Pria di usia 40-an berisiko perlemakan hati dengan konsumsi gula tinggi.");
+          }
+      } else if (age > 30) {
+          if (weeklySugar > sugarThreshold * 1.3) {
+              setUserAnalyze("Konsumsi gula tinggi di usia 30-an dapat memicu gangguan metabolisme dan penumpukan lemak.");
+          } else {
+              setUserAnalyze("Konsumsi gula berlebih di usia ini dapat meningkatkan risiko penyakit jangka panjang.");
+          }
+      } else if (age > 20) {
+          if (weeklySugar > sugarThreshold * 1.2) {
+              setUserAnalyze("Usia 20-an dengan konsumsi gula tinggi berisiko gangguan pankreas dan resistensi insulin.");
+          } else {
+              setUserAnalyze("Konsumsi gula tinggi di usia muda dapat memengaruhi fungsi tubuh jangka panjang.");
+          }
+      } else {
+          if (weeklySugar > sugarThreshold) {
+              setUserAnalyze("Remaja dengan konsumsi gula tinggi berisiko obesitas, kerusakan gigi, dan gangguan kesehatan lainnya.");
+          } else {
+              setUserAnalyze("Konsumsi gula Anda masih terlalu tinggi untuk usia muda. Kurangi makanan manis.");
+          }
+      }
+  } else if (weeklySugar > sugarThreshold * 0.8) {
+      if (age < 20) {
+          setUserAnalyze("Konsumsi gula sedikit tinggi untuk usia remaja. Kurangi konsumsi makanan manis.");
+      } else if (age > 40) {
+          setUserAnalyze("Konsumsi gula Anda sedikit di atas ambang aman. Pertimbangkan pengurangan gula lebih lanjut.");
+      } else {
+          setUserAnalyze("Konsumsi gula sedikit tinggi, tetapi masih dalam batas wajar. Tetap perhatikan pola makan.");
+      }
+  } else if (weeklySugar < sugarThreshold * 0.5) {
+      if (age > 60) {
+          setUserAnalyze("Konsumsi gula rendah untuk usia di atas 60 tahun. Ini baik untuk kesehatan jangka panjang.");
+      } else if (age > 30) {
+          setUserAnalyze("Konsumsi gula Anda rendah. Ini menunjukkan pola makan yang sehat.");
+      } else {
+          setUserAnalyze("Konsumsi gula rendah baik untuk usia muda. Pastikan energi cukup untuk aktivitas harian.");
+      }
+  } else {
+      setUserAnalyze("Konsumsi gula Anda berada dalam batas aman. Pertahankan pola makan ini.");
+  }
+  }, [weeklySugar]);
+
   const getFoodHistory = () => {
     axiosInstance.get(`/food-record`)
     .then(response => {
@@ -355,6 +373,24 @@ export default function HomeUser() {
       }));
     }
   };
+
+  const handleDeleteBookDoctor = (id) => {
+    setLoadingDeleteBookDoctor(id)
+    axiosInstance.delete(`/book-doctor/${id}`)
+    .then(response => {
+      if (response.status != 204) {
+        alert("Error occured, please try again")
+      } else {
+        alert("book doctor telah selesai")
+        getBookDoctor()
+      }
+      setLoadingDeleteBookDoctor(null)
+    })
+    .catch(error =>{
+      console.log("error gais")
+      setLoadingDeleteBookDoctor(null)
+    })
+  }
 
   useEffect(() => {
     modelPintar()
@@ -538,9 +574,10 @@ export default function HomeUser() {
                 {/* Reminder */}
                 <div className="bg-white border border-gray-200 rounded-lg p-6">
                   <h2 className="text-xl font-semibold mb-4">STATUS BOOKING</h2>
-                  <div className="flex w-full gap-2">
-                    {bookDoctorData && bookDoctorData.map((item, index) => (
-                      <div key={index} className="bg-white rounded-lg p-4 flex gap-4 min-w-full">
+                  {bookDoctorData && bookDoctorData.map((item, index) => (
+                      <div key={index}>
+                      <div className="flex w-full gap-2">
+                      <div className="bg-white rounded-lg p-4 flex gap-4 min-w-full">
                         <div className="w-24 h-24 mb-2 rounded-lg overflow-hidden"> 
                           <Image
                             src={item.doctor.images}
@@ -557,8 +594,10 @@ export default function HomeUser() {
                           <p className="text-sm text-gray-600">{item.bookingDate}</p>
                         </div>
                       </div>
-                    ))}
                   </div>
+                  <Button className="p-1 w-1/2 bg-orange-500 text-white hover:bg-gray-800 text-xs rounded-lg" onClick={() => handleDeleteBookDoctor(item.bookDoctorId)}> DONE</Button>
+                  </div>
+                ))}
                 </div>
               </div>
             )}
@@ -918,12 +957,12 @@ export default function HomeUser() {
             )}
 
             {activeMain === 'settings'&& (
-              <div className="h-[600px] max-w-[1200px] mx-auto bg-white rounded-xl shadow-sm overflow-hidden">
+              <div className="h-[700px] max-w-[1200px] mx-auto bg-white rounded-xl shadow-sm overflow-hidden">
                 {/* Setting Header */}
                 <div className="py-4 px-6 border-b">
                   <h1 className="font-medium">SETTING</h1>
                 </div>
-                <div className="flex">
+                <div className="flex ">
                   {/* Sidebar */}
                   <div className="w-40 border-r p-6">
                     <div className="flex items-center gap-2 text-gray-700">
@@ -937,55 +976,40 @@ export default function HomeUser() {
                       {/* Profile Picture Section */}
                       <div className="flex items-center gap-4">
                         <img
-                          src={userData ? userData.images : null}
+                          src={detailUser ? detailUser.images : null}
                           alt="Profile"
                           className="h-12 w-12 rounded-full object-cover bg-gray-100"
                         />
-                        <div className="flex gap-2 ">
-                          <label className="cursor-pointer">
-                            <input
-                              type="file"
-                              className="hidden"
-                              accept="image/*"
-                              onChange={handleImageChange}
-                            />
-                            <Button onClick={handleChangeImage} className="bg-[#FF5C35] hover:bg-[#FF5C35]/90 text-white rounded-full px-6 ml-32">
-                              Change picture
-                            </Button>
-                            <input
-                              type="file"
-                              ref={fileInputRef}
-                              style={{ display: 'none' }}
-                              accept="image/*"
-                              onChange={handleProfileChange}
-                            />
-                          </label>
-                          <Button
-                            variant="outline"
-                            className="text-[#FF5C35] border-[#FF5C35] rounded-full px-6 ml-10"
-                            onClick={() => setProfileImage("/images/profile.kosong.png")}
-                          >
-                            Delete Picture
-                          </Button>
-                        </div>
                       </div>      
+                      <form onSubmit={putUserDetail}>
                       <div className="space-y-4 ">
+                      <div className="space-y-2">
+                          <label className="text-sm text-gray-500">Url Picture</label>
+                          <Input 
+                            defaultValue={detailUser && detailUser.images}
+                            className="border-gray-200 rounded-full"
+                            onChange={(e) => handleChangeUserData("images", e.target.value)}
+                          />
+                        </div>
                         <div className="space-y-2">
                           <label className="text-sm text-gray-500">Username</label>
                           <Input 
                             defaultValue={detailUser && detailUser.username}
                             className="border-gray-200 rounded-full"
                             onChange={(e) => handleChangeUserData("username", e.target.value)}
+                            required
                           />
                         </div>
                         <div className="space-y-2">
                           <label className="text-sm text-gray-500">Gmail</label>
-                          <Input 
+                          <Input
+                            type="email"
                             defaultValue={detailUser && detailUser.email} 
                             className="border-gray-200 rounded-full"
                             onChange={(e) => handleChangeUserData("email", e.target.value)}
+                            required
                           />
-                          <p className="text-xs text-gray-400">Available change in 23/10/2025</p>
+                          
                         </div>
                         <div className="space-y-2">
                           <label className="text-sm text-gray-500">Date Of Birthday</label>
@@ -993,6 +1017,7 @@ export default function HomeUser() {
                             defaultValue={detailUser && detailUser.dateBirth}
                             className="border-gray-200 rounded-full"
                             onChange={(e) => handleChangeUserData("dateBirth", e.target.value)}
+                            required
                           />
                         </div>
                         <div className="space-y-2">
@@ -1001,15 +1026,17 @@ export default function HomeUser() {
                             defaultValue={detailUser && detailUser.gender}
                             className="border-gray-200 rounded-full"
                             onChange={(e) => handleChangeUserData("gender", e.target.value)}
+                            required
                           />
                         </div>
                       </div>
                       {/* Save Button */}
-                      <div className="flex justify-end">
-                        <Button disabled={loadingUpdateUser} className="bg-[#FF5C35] hover:bg-[#FF5C35]/90 text-white rounded-full px-6" onClick={putUserDetail}>
+                      <div className="flex justify-end mt-4">
+                        <Button type="submit" disabled={loadingUpdateUser} className="bg-[#FF5C35] hover:bg-[#FF5C35]/90 text-white rounded-full px-6">
                           {loadingUpdateUser ? <LoadingSpinner /> : "Save Changes"}
                         </Button>
                       </div>
+                    </form>
                     </div>
                   </div>
                 </div>

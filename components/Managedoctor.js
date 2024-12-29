@@ -13,6 +13,7 @@ import { LoadingSpinner } from "@/components/ui/loading"
 
 export function Home() {
   const [data, setData] = useState([])
+  const [images, setImages] = useState("")
   const [doctorImage, setDoctorImage] = useState("/images/logo_inputPicture.png")
   const [doctorName, setDoctorName] = useState("")
   const [gmail, setGmail] = useState("")
@@ -22,89 +23,6 @@ export function Home() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [LoadingSubmitDoctor, setLoadingSubmitDoctor] = useState(false) 
   const [loadingDeleteDoctor, setLoadingDeleteDoctor] = useState(null)
-  const [doctorItems, setDoctorItems] = useState([
-    
-    {
-      id: 1,
-      name: 'Dr. Wisnu Satrio',
-      spesialist: 'Endrokrinolog',
-      gmail: 'wisnu@gmail.com',
-      image: '/images/doctor-1.jpg',
-      jadwal: ['09:00', '10:00', '11:00', '15:00', '16:00'],
-    },
-    {
-      id: 2,
-      name: 'Dr. Ananta Firdiansyah',
-      spesialist: 'General',
-      gmail: 'ananta@gmail.com',
-      image: '/images/doctor-2.jpg',
-      jadwal: ['08:00', '09:00', '10:00', '14:00', '15:00', '16:00'],
-    },
-    {
-      id: 3,
-      name: 'Dr. Dhafi Muhammad',
-      spesialist: 'Nutrition',
-      gmail: 'dhafi@gmail.com',
-      image: '/images/doctor-3.jpg',
-      jadwal: ['09:00', '10:00', '11:00', '15:00', '16:00', '17:00'],
-    },
-    {
-      id: 4,
-      name: 'Dr. Aryo Wahyu',
-      spesialist: 'Nutrition',
-      gmail: 'aryo@gmail.com',
-      image: '/images/dokterElnino.jpg',
-      jadwal: ['09:00', '10:00'],
-    },
-    {
-      id: 5,
-      name: 'Dr. Arifin Hakim Suza',
-      spesialist: 'Endokrinolog',
-      gmail: 'hakim@gmail.com',
-      image: '/images/dokterprof.jpg',
-      jadwal: ['15:00', '16:00', '17:00'],
-    },
-    {
-      id: 6,
-      name: 'Dr. Sakie Suza',
-      spesialist: 'Nutrition',
-      gmail: 'Sakie@gmail.com',
-      image: '/images/Giano.png',
-      jadwal: ['09:00', '10:00', '15:00', '16:00'],
-    },
-    {
-      id: 7,
-      name: 'Dr. Naufal Arifin',
-      spesialist: 'General',
-      gmail: 'Naufala@gmail.com',
-      image: '/images/doctor-7.jpg',
-      jadwal: ['17:00'],
-    },
-    {
-      id: 8,
-      name: 'Dr. Naufal Hakim',
-      spesialist: 'Nutrition',
-      gmail: 'Naufal@gmail.com',
-      image: '/images/doctor-8.jpg',
-      jadwal: ['09:00', '10:00', '15:00', '16:00'],
-    },
-    {
-      id: 9,
-      name: 'Dr. Bintang Rizky',
-      spesialist: 'Nutrition',
-      gmail: 'Bintang@gmail.com',
-      image: '/images/doctor-8.jpg',
-      jadwal: ['15:00', '16:00', '17:00'],
-    },
-    {
-      id: 10,
-      name: 'Dr. Moza Qonita',
-      spesialist: 'General',
-      gmail: 'Moza@gmail.com',
-      image: '/images/doctor-8.jpg',
-      jadwal: ['09:00', '10:00'],
-    }
-  ])
 
   const getDoctor = () => {
     axiosInstance.get('/doctor')
@@ -127,7 +45,8 @@ export function Home() {
       name: doctorName,
       email: gmail,
       speciality: spesialist,
-      practiceDay: jadwal
+      practiceDay: jadwal,
+      images: images
     }
 
     axiosInstance.post('/doctor', payload)
@@ -137,6 +56,8 @@ export function Home() {
       setDoctorName("")
       setGmail("")
       setSpesialist("")
+      setJadwal("")
+      setImages("")
       setLoadingSubmitDoctor(false)
     })
     .catch(error => {
@@ -166,9 +87,10 @@ export function Home() {
   const handleUpdateDoctor = (id) => {
     const payload ={
       name: editItem.name,
-      email: editItem.gmail,
-      speciality: editItem.spesialist,
-      practiceDay: editItem.jadwal
+      email: editItem.email,
+      speciality: editItem.speciality,
+      practiceDay: editItem.practiceDay,
+      images: editItem.images
     }
     axiosInstance.put(`/doctor/${id}`,payload)
     .then(() =>{
@@ -193,7 +115,7 @@ export function Home() {
     axiosInstance.delete(`/doctor/${id}`)
     .then(response => {
       console.log(response.status)
-      if (response.status != 200 || response.status != 201) {
+      if (response.status != 200) {
         alert("Error occured, please try again")
       } else {
         alert("doctor berhasil dihapus")
@@ -222,27 +144,13 @@ export function Home() {
         <Card className="p-6">
           <h2 className="text-xl font-bold mb-6">Insert data doctor</h2>
           <form onSubmit={handleSubmitDoctor} className="space-y-4">
-            {/* Image Upload */}
-            <div className="w-52 border-dashed border-gray-200 rounded-lg p-4 text-center ml-24 ">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageUpload(e)}
-                className="hidden"
-                id="doctor-image"
-              />
-              <label htmlFor="doctor-image" className="cursor-pointer">
-                <div className="w-32 h-32 mx-auto">
-                  <Image
-                    src={doctorImage}
-                    alt="Doctor preview"
-                    width={128}
-                    height={128}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                </div>
-              </label>
-            </div>
+
+            <Input
+              placeholder="Url Images"
+              value={images}
+              onChange={(e) => setImages(e.target.value)}
+              required
+            />
 
             {/* Doctor Name Input */}
             <Input
@@ -355,29 +263,12 @@ export function Home() {
             <DialogTitle>Edit Doctor Item</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {/* Image Upload */}
-            <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageUpload(e, true)}
-                className="hidden"
-                id="edit-doctor-image"
-              />
-              <label htmlFor="edit-doctor-image" className="cursor-pointer">
-                <div className="w-32 h-32 mx-auto mb-2">
-                  <Image
-                    src={editItem?.image || "/images/logo_malee.png"}
-                    alt="Doctor preview"
-                    width={128}
-                    height={128}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                </div>
-                <span className="text-sm text-gray-500">Input picture</span>
-              </label>
-            </div>
 
+            <Input
+              placeholder="Url Images"
+              value={editItem?.images || ""}
+              onChange={(e) => setEditItem(editItem ? { ...editItem, images: e.target.value } : null)}
+            />
             {/* Doctor Name Input */}
             <Input
               placeholder="Doctor Name"
@@ -390,7 +281,7 @@ export function Home() {
               type="email"
               placeholder="Email"
               value={editItem?.email || ""}
-              onChange={(e) => setEditItem(editItem ? { ...editItem, gmail: e.target.value } : null)}
+              onChange={(e) => setEditItem(editItem ? { ...editItem, email: e.target.value } : null)}
             />
 
             {/* Specialist Input */}
@@ -398,7 +289,7 @@ export function Home() {
               type="text"
               placeholder="Specialist"
               value={editItem?.speciality || ""}
-              onChange={(e) => setEditItem(editItem ? { ...editItem, spesialist: e.target.value } : null)}
+              onChange={(e) => setEditItem(editItem ? { ...editItem, speciality: e.target.value } : null)}
             />
 
             {/* Schedule Input */}
@@ -406,7 +297,7 @@ export function Home() {
               type="text"
               placeholder="jadwal"
               value={editItem?.practiceDay || ""}
-              onChange={(e) => setEditItem(editItem ? { ...editItem, jadwal: e.target.value } : null)}
+              onChange={(e) => setEditItem(editItem ? { ...editItem, practiceDay: e.target.value } : null)}
             />
             {/* <div className="space-y-2">
               <label className="text-sm font-medium">Jadwal</label>

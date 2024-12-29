@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { User } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -8,14 +8,16 @@ import { Bell, Settings, LogOut, ChevronLeft, ChevronRight, ShieldOff } from 'lu
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { HomeAdminUser} from '@/components/Manageuser'
+import axiosInstance from "@/lib/axios"
 
 export default function HomeAdmin() {
     const [searchQuery, setSearchQuery] = useState('')
     const [isDashboardOpen, setIsDashboardOpen] = useState(true)
-    const [activeSection, setActiveSection] = useState('Dashboard')
+    const [activeSection, setActiveSection] = useState('manageUser')
     const [activeMain, setActiveMain] = useState('Home')
     const [showSuccessModall, setShowSuccessModall] = useState(false)
     const [profileImage, setProfileImage] = useState("/images/profil.jpg")
+    const [adminData, setAdminData] = useState(null)
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0]
@@ -27,6 +29,12 @@ export default function HomeAdmin() {
         reader.readAsDataURL(file)
       }
     }
+
+  useEffect(() => {
+        if (typeof window !== "undefined"){
+          setAdminData(JSON.parse(localStorage.getItem("userData")))
+        }
+  }, [])
   const handleSearch = (e) => {
     e.preventDefault()
     // Implement search functionality
@@ -48,6 +56,18 @@ export default function HomeAdmin() {
   const router = useRouter()
 
   const handleContinue = () => {
+    axiosInstance.post('http://localhost:8080/logout')
+    .then(() => {
+      console.log("user logged out")
+    })
+    .catch((error) => {
+      // Suppress 404 if user is successfully logged out
+      if (error.response && error.response.status === 404) {
+        console.warn('Ignore 404 on logout redirect');
+      } else {
+        console.error('Logout error:', error);
+      }
+    });
     router.push('/login')
   }
   
@@ -72,7 +92,7 @@ export default function HomeAdmin() {
                         width={32}
                         height={32}
             />
-            <span className="font-semibold">Hi, Giano</span>
+            <span className="font-semibold">Hi, {adminData ? adminData.username : ""}</span>
           </div>
         </div>
       </header>
@@ -95,14 +115,6 @@ export default function HomeAdmin() {
         <aside className={`w-56 bg-white border-r border-gray-200 transition-all duration-300 ease-in-out ${isDashboardOpen ? '' : '-ml-64'}`}>
           <div className="p-4 h-full flex flex-col">
             <nav className="flex-1">
-            <button
-                onClick={() => (handleSectionChange('Dashboard'),handleHomeChange('Home'))}
-                className={`flex items-center w-full text-left ${
-                activeSection === 'Dashboard' ? 'text-orange-600' : 'text-gray-600 hover:text-orange-500'
-                }`}
-            >
-              <h2 className="text-lg font-semibold mb-4">DASHBOARD</h2> 
-            </button>
               <ul className="space-y-2">
                 <li>
                     <button
@@ -121,17 +133,6 @@ export default function HomeAdmin() {
               <h2 className="text-lg font-semibold mb-4 text-gray-500">ACCOUNT</h2>
               <ul className="space-y-2">
                 <li>
-                    <button
-                        onClick={() => (handleSectionChange(''),handleHomeChange('settings')) }
-                        className={`flex items-center w-full text-left ${
-                        activeMain === 'settings' ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'
-                        }`}
-                    >
-                        <Settings className="w-5 h-5 mr-2" />
-                        Setting
-                    </button>
-                </li>
-                <li>
                     <button onClick={() => setShowSuccessModall(true)}className="relative mb-5 flex items-center text-gray-600 hover:text-orange-500">
                         <LogOut className="w-5 h-5 mr-2" /> Logout   
                     </button>
@@ -148,72 +149,14 @@ export default function HomeAdmin() {
           <div className="p-8">
             {activeMain === 'Home'&& (
               <div
-                className={` ${
-                isDashboardOpen ? 'grid grid-cols-2 gap-8' : 'grid grid-cols-2 gap-8 ml-8'}
-                }  `}
+                className={`w-full px-8`}
               >
                 {/* Your Goal For Today */}
                 <div className="bg-white border border-gray-200 rounded-lg p-6">
-                  <h1 className="text-2xl font-bold mb-4">Hi, Giano</h1>
+                  <h1 className="text-2xl font-bold mb-4">Hi, {adminData ? adminData.username : ""}</h1>
                   <p className="text-gray-600">Good Luck</p>
                 </div>
 
-                {/* Reminder */}
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
-                  <h2 className="text-xl font-semibold mb-4">REMINDER</h2>
-                  <div className="grid grid-cols-4 gap-4">
-                    <div className="text-center">
-                      <Image src="/images/water.png" alt="Water" width={40} height={40} className="mx-auto mb-2" />
-                      <p className="font-semibold">Water</p>
-                      <p className="text-sm text-gray-600">4L</p>
-                    </div>
-                    <div className="text-center">
-                      <Image src="/images/moon.png" alt="Sleep" width={40} height={40} className="mx-auto mb-2" />
-                      <p className="font-semibold">Sleep</p>
-                      <p className="text-sm text-gray-600">8h</p>
-                    </div>
-                    <div className="text-center">
-                      <Image src="/images/calories.png" alt="Calories" width={52} height={40} className="mx-auto mb-2" />
-                      <p className="font-semibold">Calories</p>
-                      <p className="text-sm text-gray-600">1500kcal</p>
-                    </div>
-                    <div className="text-center">
-                      <Image src="/images/carbohydrate.png" alt="Carbohydrate" width={42} height={40} className="mx-auto mb-2" />
-                      <p className="font-semibold">Carbohydrate</p>
-                      <p className="text-sm text-gray-600">80g</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeSection === 'Dashboard'&& (
-              <div className="mt-8">
-                <div
-                    className={` ${
-                    isDashboardOpen ? 'grid grid-cols-2 gap-8' : 'grid grid-cols-2 gap-8 ml-10'}
-                    }  `}
-                >
-                  <h2 className="text-xl font-semibold mb-4">user INFORMATION!</h2>
-                </div>
-                <div
-                    className={` ${
-                    isDashboardOpen ? 'grid grid-cols-3 gap-4' : 'grid grid-cols-3 gap-4 ml-8'}
-                    }  `}
-                >
-                  {[1, 2, 3].map((index) => (
-                    <div key={index} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                      <Image src={`/images/user-info-${index}.jpg`} alt={`User Information ${index}`} width={400} height={200} className="w-full h-48 object-cover" />
-                      <div className="p-4">
-                        <div className="flex justify-between text-sm">
-                          <span>42 gram Kalori</span>
-                          <span>12 gram Gula</span>
-                          <span>15 gram Karbohidrat</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
             )}
 
@@ -227,94 +170,6 @@ export default function HomeAdmin() {
               </div>
             )}
             
-            {activeMain === 'settings'&& (
-              <div className="h-[600px] max-w-[1200px] mx-auto bg-white rounded-xl shadow-sm overflow-hidden">
-                {/* Setting Header */}
-                <div className="py-4 px-6 border-b">
-                  <h1 className="font-medium">SETTING</h1>
-                </div>
-                <div className="flex">
-                  {/* Sidebar */}
-                  <div className="w-40 border-r p-6">
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <User className="h-5 w-5" />
-                      <span className="text-lg">Profile</span>
-                    </div>
-                  </div>
-                  {/* Main Content */}
-                  <div className="flex-1 p-6">
-                    <div className="max-w-2xl space-y-6">
-                      {/* Profile Picture Section */}
-                      <div className="flex items-center gap-4">
-                        <img
-                          src={profileImage}
-                          alt="Profile"
-                          className="h-12 w-12 rounded-full object-cover bg-gray-100"
-                        />
-                        <div className="flex gap-2 ">
-                          <label className="cursor-pointer">
-                            <input
-                              type="file"
-                              className="hidden"
-                              accept="image/*"
-                              onChange={handleImageChange}
-                            />
-                            <Button className="bg-[#FF5C35] hover:bg-[#FF5C35]/90 text-white rounded-full px-6 ml-32">
-                              Change picture
-                            </Button>
-                          </label>
-                          <Button
-                            variant="outline"
-                            className="text-[#FF5C35] border-[#FF5C35] rounded-full px-6 ml-10"
-                            onClick={() => setProfileImage("/images/profile.kosong.png")}
-                          >
-                            Delete Picture
-                          </Button>
-                        </div>
-                      </div>      
-                      <div className="space-y-4 ">
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500">Username</label>
-                          <Input 
-                            defaultValue="Giano" 
-                            className="border-gray-200 rounded-full"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500">Gmail</label>
-                          <Input 
-                            defaultValue="SakieGiano" 
-                            className="border-gray-200 rounded-full"
-                          />
-                          <p className="text-xs text-gray-400">Available change in 23/10/2025</p>
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500">Date Of Birthday</label>
-                          <Input 
-                            defaultValue="25-Mei-2004" 
-                            className="border-gray-200 rounded-full"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500">Gender</label>
-                          <Input 
-                            defaultValue="Laki-Laki" 
-                            className="border-gray-200 rounded-full"
-                          />
-                        </div>
-                      </div>
-                      {/* Save Button */}
-                      <div className="flex justify-end">
-                        <Button className="bg-[#FF5C35] hover:bg-[#FF5C35]/90 text-white rounded-full px-6">
-                          Save Changes
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {showSuccessModall && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center pt-56 z-50">
                 <div className="bg-white rounded-2xl p-6 w-80">
@@ -333,7 +188,7 @@ export default function HomeAdmin() {
                     <button onClick={handleContinue}
                       className="flex-1 p-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 mt-5"
                     >
-                      Log Out Securly
+                      Log Out Securely
                     </button>
                   </div>
                   <div className="flex space-4">

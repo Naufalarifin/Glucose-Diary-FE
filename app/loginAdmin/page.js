@@ -30,7 +30,9 @@ export default function CreateAccount() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+    if (!formData.username.includes('food_') && !formData.username.includes('doctor_') && !formData.username.includes('user_')) {
+      alert("error, are you user?")
+    }else {
     // Replace with your actual payload data
     const payload = {
       username: formData.username,
@@ -60,10 +62,17 @@ export default function CreateAccount() {
     } catch (error) {
       alert(error.response.data.error || "Something went wrong, please try again later");
     }
+  }
   };
 
   const handleContinue = () => {
-    router.push('/homeAdmin')
+    if (formData.username.includes('food_')){
+      router.push('/homeAdminFood')
+    } else if (formData.username.includes('doctor_')){
+      router.push('/homeAdminDoctor')
+    } else if (formData.username.includes('user_')){
+      router.push('/homeAdminUser')
+    }
   }
 
   if (!isClient) {
