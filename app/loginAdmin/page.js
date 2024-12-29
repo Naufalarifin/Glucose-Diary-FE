@@ -7,12 +7,13 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import axios from 'axios'
 
 export default function CreateAccount() {
   const [isClient, setIsClient] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: '',
   })
 
@@ -27,13 +28,42 @@ export default function CreateAccount() {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    setShowSuccessModal(true)
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+  
+    // Replace with your actual payload data
+    const payload = {
+      username: formData.username,
+      password: formData.password,
+    };
+  
+    // Encode payload as application/x-www-form-urlencoded
+    const urlEncodedPayload = new URLSearchParams();
+    for (const key in payload) {
+      urlEncodedPayload.append(key, payload[key]);
+    }
+  
+    try {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/login`, urlEncodedPayload, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        withCredentials: true
+      });
+  
+      if (response.status === 200) {
+        localStorage.setItem("userData", JSON.stringify(response.data));
+        setShowSuccessModal(true);
+      } else {
+        console.log('Login failed:', response.status, response.data);
+      }
+    } catch (error) {
+      alert(error.response.data.error || "Something went wrong, please try again later");
+    }
+  };
 
   const handleContinue = () => {
-    router.push('/homeUser')
+    router.push('/homeAdmin')
   }
 
   if (!isClient) {
@@ -96,7 +126,7 @@ export default function CreateAccount() {
               required 
               onChange={handleInputChange} 
             />
-            <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white" >Log in</Button>
+            <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white" >Log in</Button>
             </form>
             <p className="mt-2 text-sm text-gray-600">
               Login as user?<Link href="/login" className="text-blue-500 hover:underline">Login</Link>
