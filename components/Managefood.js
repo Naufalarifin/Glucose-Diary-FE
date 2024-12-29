@@ -25,7 +25,7 @@ export function Home() {
   const getFood = () => {
     axiosInstance.get('/food')
     .then(response =>{
-      setData(response.data)
+      setData(response.data.payload)
     })
     .catch(error =>{
       console.error(error)
@@ -176,7 +176,7 @@ export function Home() {
             {data.length ? data.map((item, index) => (
               <div key={index} className="flex items-start space-x-4 p-4 border rounded-lg">
                 <Image
-                  src={"/images/nasigoreng.jpg"}
+                  src={item.images}
                   alt={item.name}
                   width={64}
                   height={64}

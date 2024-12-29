@@ -66,7 +66,7 @@ export function HomeAdminUser() {
   const getUser = () => {
     axiosInstance.get('/user')
     .then(response =>{
-      setData(response.data)
+      setData(response.data.payload)
     })
     .catch(error =>{
       console.error(error)
@@ -234,13 +234,13 @@ export function HomeAdminUser() {
           <div className="space-y-4 max-h-[500px] overflow-y-auto">
             {data.length ? data.map((item, index) => (
               <div key={index} className="flex items-start space-x-4 p-4 border rounded-lg">
-                <Image
-                  src={'/images/Giano.png'}
+                {/* <Image
+                  src={item.images}
                   alt={item.username}
                   width={64}
                   height={64}
                   className="w-16 h-16 rounded-lg object-cover"
-                />
+                /> */}
                 <div className="flex-1">
                   <h3 className="font-semibold">{item.username}</h3>
                   <p className="text-sm text-gray-600">{item.email}</p>
@@ -259,7 +259,7 @@ export function HomeAdminUser() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleDelete(item.userId)}
+                    onClick={() => handleDeleteUser(item.userId)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -289,7 +289,7 @@ export function HomeAdminUser() {
               <label htmlFor="edit-user-image" className="cursor-pointer">
                 <div className="w-32 h-32 mx-auto mb-2">
                   <Image
-                    src={editItem?.image || "/placeholder.svg?height=100&width=100"}
+                    src={editItem?.images || "/images/nasi_goreng.jpg"}
                     alt="User preview"
                     width={128}
                     height={128}

@@ -507,7 +507,8 @@ export default function HomeUser() {
                   <div className="grid md:grid-cols-3 grid-cols-1 gap-4 mb-4">
                     <div className="text-center">
                       <p className="font-semibold">Age</p>
-                      <p className="text-lg">{userData ? new Date().getFullYear() - new Date(userData.dateBirth).getFullYear() : 0}</p>
+                      <p className="text-lg">{userData ? new Date().getFullYear() - 
+                      new Date(userData.dateBirth).getFullYear() : 0}</p>
                     </div>
                     <div className="text-center">
                       <p className="font-semibold">Weekly Sugar</p>
