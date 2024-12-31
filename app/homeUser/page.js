@@ -34,6 +34,7 @@ export default function HomeUser() {
     const [detailUser, setDetailUser] = useState(useState({
       gender: ""
     }))
+    
     const [loadingUpdateUser, setLoadingUpdateUser] = useState(false)
     const [userData, setUserData] = useState(null)
     const [doctorData, setdoctorData] = useState(null)
@@ -1000,28 +1001,19 @@ export default function HomeUser() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm text-gray-500">Gender</label>
-                          <Input 
-                            defaultValue={detailUser && detailUser.gender}
-                            className="border-gray-200 rounded-full"
-                            onChange={(e) => handleChangeUserData("gender", e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
                           <p className="text-sm font-medium text-gray-700">Gender</p>
                           <div className="flex gap-4">
                           <Select
-                          value={selectedGender}  
+                             value={detailUser?.gender || ""}  
                               
                               // value={editItem?.gender || ""} 
                               // onValueChange={(value) => setEditItem(editItem ? { ...editItem, gender: value } : null)}
                             onValueChange={(value) => {setSelectedGender(value); handleChangeUserData("gender", value)}}
-                             >
+                          >
               <SelectTrigger>
               <SelectValue>
               {detailUser?.gender === 'male' ? 'Male' : detailUser?.gender === 'female' ? 'Female' : 'Select gender'}
-                  </SelectValue>
+              </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="male">male</SelectItem>
