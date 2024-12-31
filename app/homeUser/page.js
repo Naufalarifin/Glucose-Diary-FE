@@ -155,6 +155,7 @@ export default function HomeUser() {
     axiosInstance.post('/food-record', payload)
     .then(() => {
       alert("Food Record Berhasil Ditambahkan")
+      getfoodrecordweek()
     })
     .catch(error => {
       console.log(error)
@@ -248,13 +249,8 @@ export default function HomeUser() {
     })
   }
 
-  
-  const modelPintar = async () => {
-    const sugarThreshold = 200;
-    const age = userData ? new Date().getFullYear() - new Date(userData.dateBirth).getFullYear() : 0;
-
-    if (userData) {
-      await axiosInstance.get(`/food-record/week-data`)
+  const getfoodrecordweek = async () => {
+    await axiosInstance.get(`/food-record/week-data`)
       .then(response => {
         const sugarLevelSum = response.data.payload
           .filter(record => record.user.userId === userData.userId) // Filter records by userId
@@ -264,9 +260,21 @@ export default function HomeUser() {
       .catch(error => {
         console.log(error)
       })
-    }
   }
-  
+
+  // const modelPintar = async () => {
+  //   const sugarThreshold = 200;
+  //   const age = userData ? new Date().getFullYear() - new Date(userData.dateBirth).getFullYear() : 0;
+
+  //   if (userData) {
+  //    getfoodrecordweek()
+  //   }
+  // }
+
+  // useEffect(() => {
+  //   modelPintar();
+  //  }, [weeklySugar]);
+
   useEffect(() => {
     const sugarThreshold = 200;
     const age = userData ? new Date().getFullYear() - new Date(userData.dateBirth).getFullYear() : 0;
@@ -339,6 +347,10 @@ export default function HomeUser() {
   }
   }, [weeklySugar]);
 
+  useEffect(() => {
+    getfoodrecordweek()
+   }, [userData]);
+
   const getFoodHistory = () => {
     axiosInstance.get(`/food-record`)
     .then(response => {
@@ -392,9 +404,6 @@ export default function HomeUser() {
     })
   }
 
-  useEffect(() => {
-    modelPintar()
-  }, [userData])
 
   return (
     <div className="flex flex-col h-screen bg-white overflow-hidden">
@@ -775,14 +784,6 @@ export default function HomeUser() {
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">FOOD HISTORY</h2>
-            <button onClick={() => setShowSuccessModal(true)}>
-              <Image 
-                src="/images/logo_sort.png" 
-                alt="Sort" 
-                width={20} 
-                height={20}
-              />
-            </button>
           </div>
 
           <div className="space-y-8">
@@ -811,33 +812,6 @@ export default function HomeUser() {
         </div>
       )}
 
-{showSuccessModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-            <h2 className="text-xl font-bold mb-4">Sort Options</h2>
-            <div className="space-y-2">
-              <button 
-                className="w-full text-left p-2 hover:bg-gray-100 rounded-lg"
-                onClick={() => setShowSuccessModal(false)}
-              >
-                Sort by Date
-              </button>
-              <button 
-                className="w-full text-left p-2 hover:bg-gray-100 rounded-lg"
-                onClick={() => setShowSuccessModal(false)}
-              >
-                Sort by Name
-              </button>
-              <button 
-                className="w-full text-left p-2 hover:bg-gray-100 rounded-lg"
-                onClick={() => setShowSuccessModal(false)}
-              >
-                Sort by Portion
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
             {activeSection === 'consultDoctorSection1'&& (
               <div className="mt-8">
                 <div

@@ -113,10 +113,7 @@ export default function CreateAccount() {
       <div className="flex-1 flex items-center justify-center">
         <div className="w-full max-w-md space-y-8 px-4">
           <div>
-            <h2 className="text-3xl font-bold text-orange-500">Welcome Back!</h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Don't have an account? <Link href="/" className="text-blue-500 hover:underline">Create Account</Link>
-            </p>
+            <h2 className="text-3xl font-bold text-orange-500">Welcome Admin!</h2>
           </div>
           <form className="space-y-6" onSubmit={handleSubmit}>
             <Input 
