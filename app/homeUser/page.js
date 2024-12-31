@@ -11,6 +11,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { use, useEffect, useRef, useState } from 'react'
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function HomeUser() {
     const [data, setData] = useState([])
@@ -28,7 +29,11 @@ export default function HomeUser() {
     const [selectedTime, setSelectedTime] = useState(null)
     const [selectedType, setSelectedType] = useState(null)
     const [searchFood, setSearchFood] = useState("")
-    const [detailUser, setDetailUser] = useState(null)
+    const [selectedGender, setSelectedGender] = useState("")
+    
+    const [detailUser, setDetailUser] = useState(useState({
+      gender: ""
+    }))
     const [loadingUpdateUser, setLoadingUpdateUser] = useState(false)
     const [userData, setUserData] = useState(null)
     const [doctorData, setdoctorData] = useState(null)
@@ -743,7 +748,7 @@ export default function HomeUser() {
           {/* Chart Section */}
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <h2 className="text-xl font-bold mb-6">Sugar Consumption (Per 7-Day Period)</h2>
-            <div className="h-[300px]">
+            <div className="h-[150px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={processDataForChart(foodHistory)}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -786,7 +791,7 @@ export default function HomeUser() {
             <h2 className="text-xl font-semibold">FOOD HISTORY</h2>
           </div>
 
-          <div className="space-y-8">
+          <div className="h-[calc(400px)] overflow-y-auto pr-2 space-y-8">
             {foodHistory && foodHistory.map((item, index) => (
               <div key={index}>
                 {/* <h3 className="text-sm font-medium text-gray-500 mb-4">{day.date}</h3> */}
@@ -1003,6 +1008,28 @@ export default function HomeUser() {
                             required
                           />
                         </div>
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-gray-700">Gender</p>
+                          <div className="flex gap-4">
+                          <Select
+                          value={selectedGender}  
+                              
+                              // value={editItem?.gender || ""} 
+                              // onValueChange={(value) => setEditItem(editItem ? { ...editItem, gender: value } : null)}
+                            onValueChange={(value) => {setSelectedGender(value); handleChangeUserData("gender", value)}}
+                             >
+              <SelectTrigger>
+              <SelectValue>
+              {detailUser?.gender === 'male' ? 'Male' : detailUser?.gender === 'female' ? 'Female' : 'Select gender'}
+                  </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="male">male</SelectItem>
+                <SelectItem value="female">female</SelectItem>
+              </SelectContent>
+            </Select>
+                          </div>
+                        </div>                
                       </div>
                       {/* Save Button */}
                       <div className="flex justify-end mt-4">
