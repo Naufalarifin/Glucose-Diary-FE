@@ -91,7 +91,7 @@ export default function HomeAdmin() {
                         width={32}
                         height={32}
             />
-            <span className="font-semibold">Hi, Giano</span>
+            <span className="font-semibold">Hi, {adminData ? adminData.username : ""}</span>
           </div>
         </div>
       </header>
@@ -152,7 +152,7 @@ export default function HomeAdmin() {
               >
                 {/* Your Goal For Today */}
                 <div className="bg-white border border-gray-200 rounded-lg p-6">
-                  <h1 className="text-2xl font-bold mb-4">Hi, Giano</h1>
+                  <h1 className="text-2xl font-bold mb-4">Hi, {adminData ? adminData.username : ""}</h1>
                   <p className="text-gray-600">Good Luck</p>
                 </div>
 
