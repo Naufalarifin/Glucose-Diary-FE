@@ -179,7 +179,8 @@ export default function HomeUser() {
     })
   }
 
-  const putUserDetail = () => {
+  const putUserDetail = (e) => {
+    e.preventDefault()
     setLoadingUpdateUser(true)
     const payload ={
       username : detailUser.username,
@@ -354,7 +355,9 @@ export default function HomeUser() {
   }, [weeklySugar]);
 
   useEffect(() => {
-    getfoodrecordweek()
+    if (userData) {
+      getfoodrecordweek()
+    }
    }, [userData]);
 
   const getFoodHistory = () => {
@@ -438,7 +441,7 @@ export default function HomeUser() {
           </button>
           <div className="flex items-center space-x-2">
             <img
-                        src={userData ? userData.images : null}
+                        src={userData && userData.images !== "" ? userData.images : null}
                         alt="Profile"
                         className="rounded-full object-cover bg-gray-100"
                         width={32}
@@ -956,7 +959,7 @@ export default function HomeUser() {
                       {/* Profile Picture Section */}
                       <div className="flex items-center gap-4">
                         <img
-                          src={detailUser ? detailUser.images : null}
+                          src={detailUser && detailUser.images !== "" ? detailUser.images : null}
                           alt="Profile"
                           className="h-12 w-12 rounded-full object-cover bg-gray-100"
                         />
@@ -968,7 +971,7 @@ export default function HomeUser() {
                           <Input 
                             defaultValue={detailUser && detailUser.images}
                             className="border-gray-200 rounded-full"
-                            onChange={(e) => handleChangeUserData("images", e.target.value)}
+                            onInput={(e) => handleChangeUserData("images", e.target.value)}
                           />
                         </div>
                         <div className="space-y-2">
